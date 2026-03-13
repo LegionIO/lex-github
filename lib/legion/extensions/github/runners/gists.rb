@@ -9,30 +9,30 @@ module Legion
         module Gists
           include Legion::Extensions::Github::Helpers::Client
 
-          def list_gists(per_page: 30, page: 1, **opts)
-            response = connection(**opts).get('/gists', per_page: per_page, page: page)
+          def list_gists(per_page: 30, page: 1, **)
+            response = connection(**).get('/gists', per_page: per_page, page: page)
             { result: response.body }
           end
 
-          def get_gist(gist_id:, **opts)
-            response = connection(**opts).get("/gists/#{gist_id}")
+          def get_gist(gist_id:, **)
+            response = connection(**).get("/gists/#{gist_id}")
             { result: response.body }
           end
 
-          def create_gist(files:, description: nil, public: false, **opts)
+          def create_gist(files:, description: nil, public: false, **)
             payload = { files: files, description: description, public: public }
-            response = connection(**opts).post('/gists', payload)
+            response = connection(**).post('/gists', payload)
             { result: response.body }
           end
 
-          def update_gist(gist_id:, files: nil, description: nil, **opts)
+          def update_gist(gist_id:, files: nil, description: nil, **)
             payload = { files: files, description: description }.compact
-            response = connection(**opts).patch("/gists/#{gist_id}", payload)
+            response = connection(**).patch("/gists/#{gist_id}", payload)
             { result: response.body }
           end
 
-          def delete_gist(gist_id:, **opts)
-            response = connection(**opts).delete("/gists/#{gist_id}")
+          def delete_gist(gist_id:, **)
+            response = connection(**).delete("/gists/#{gist_id}")
             { result: response.status == 204 }
           end
 

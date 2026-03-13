@@ -9,19 +9,19 @@ module Legion
         module Repositories
           include Legion::Extensions::Github::Helpers::Client
 
-          def list_repos(username:, per_page: 30, page: 1, **opts)
-            response = connection(**opts).get("/users/#{username}/repos", per_page: per_page, page: page)
+          def list_repos(username:, per_page: 30, page: 1, **)
+            response = connection(**).get("/users/#{username}/repos", per_page: per_page, page: page)
             { result: response.body }
           end
 
-          def get_repo(owner:, repo:, **opts)
-            response = connection(**opts).get("/repos/#{owner}/#{repo}")
+          def get_repo(owner:, repo:, **)
+            response = connection(**).get("/repos/#{owner}/#{repo}")
             { result: response.body }
           end
 
-          def create_repo(name:, description: nil, private: false, **opts)
+          def create_repo(name:, description: nil, private: false, **)
             body = { name: name, description: description, private: private }
-            response = connection(**opts).post('/user/repos', body)
+            response = connection(**).post('/user/repos', body)
             { result: response.body }
           end
 
@@ -31,18 +31,18 @@ module Legion
             { result: response.body }
           end
 
-          def delete_repo(owner:, repo:, **opts)
-            response = connection(**opts).delete("/repos/#{owner}/#{repo}")
+          def delete_repo(owner:, repo:, **)
+            response = connection(**).delete("/repos/#{owner}/#{repo}")
             { result: response.status == 204 }
           end
 
-          def list_branches(owner:, repo:, per_page: 30, page: 1, **opts)
-            response = connection(**opts).get("/repos/#{owner}/#{repo}/branches", per_page: per_page, page: page)
+          def list_branches(owner:, repo:, per_page: 30, page: 1, **)
+            response = connection(**).get("/repos/#{owner}/#{repo}/branches", per_page: per_page, page: page)
             { result: response.body }
           end
 
-          def list_tags(owner:, repo:, per_page: 30, page: 1, **opts)
-            response = connection(**opts).get("/repos/#{owner}/#{repo}/tags", per_page: per_page, page: page)
+          def list_tags(owner:, repo:, per_page: 30, page: 1, **)
+            response = connection(**).get("/repos/#{owner}/#{repo}/tags", per_page: per_page, page: page)
             { result: response.body }
           end
 

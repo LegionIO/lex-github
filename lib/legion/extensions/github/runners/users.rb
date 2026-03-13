@@ -9,23 +9,23 @@ module Legion
         module Users
           include Legion::Extensions::Github::Helpers::Client
 
-          def get_authenticated_user(**opts)
-            response = connection(**opts).get('/user')
+          def get_authenticated_user(**)
+            response = connection(**).get('/user')
             { result: response.body }
           end
 
-          def get_user(username:, **opts)
-            response = connection(**opts).get("/users/#{username}")
+          def get_user(username:, **)
+            response = connection(**).get("/users/#{username}")
             { result: response.body }
           end
 
-          def list_followers(username:, per_page: 30, page: 1, **opts)
-            response = connection(**opts).get("/users/#{username}/followers", per_page: per_page, page: page)
+          def list_followers(username:, per_page: 30, page: 1, **)
+            response = connection(**).get("/users/#{username}/followers", per_page: per_page, page: page)
             { result: response.body }
           end
 
-          def list_following(username:, per_page: 30, page: 1, **opts)
-            response = connection(**opts).get("/users/#{username}/following", per_page: per_page, page: page)
+          def list_following(username:, per_page: 30, page: 1, **)
+            response = connection(**).get("/users/#{username}/following", per_page: per_page, page: page)
             { result: response.body }
           end
 

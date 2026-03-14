@@ -1,7 +1,8 @@
 # lex-github: GitHub Integration for LegionIO
 
 **Repository Level 3 Documentation**
-- **Category**: `/Users/miverso2/rubymine/legion/extensions/CLAUDE.md`
+- **Parent (Level 2)**: `/Users/miverso2/rubymine/legion/extensions/CLAUDE.md`
+- **Parent (Level 1)**: `/Users/miverso2/rubymine/legion/CLAUDE.md`
 
 ## Purpose
 

@@ -102,8 +102,9 @@ client.search_issues(query: 'bug label:bug')
 ## Requirements
 
 - Ruby >= 3.4
-- [LegionIO](https://github.com/LegionIO/LegionIO) framework (optional for standalone usage)
+- [LegionIO](https://github.com/LegionIO/LegionIO) framework (optional for standalone client usage)
 - GitHub personal access token or app token
+- `faraday` >= 2.0
 
 ## License
 

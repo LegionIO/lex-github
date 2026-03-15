@@ -9,6 +9,9 @@ require 'legion/extensions/github/runners/users'
 require 'legion/extensions/github/runners/organizations'
 require 'legion/extensions/github/runners/gists'
 require 'legion/extensions/github/runners/search'
+require 'legion/extensions/github/runners/commits'
+require 'legion/extensions/github/runners/labels'
+require 'legion/extensions/github/runners/comments'
 require 'legion/extensions/github/client'
 
 module Legion

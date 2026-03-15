@@ -50,6 +50,12 @@ module Legion
             { result: response.body }
           end
 
+          def list_pull_request_reviews(owner:, repo:, pull_number:, per_page: 30, page: 1, **)
+            params = { per_page: per_page, page: page }
+            response = connection(**).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/reviews", params)
+            { result: response.body }
+          end
+
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers) &&
                                                       Legion::Extensions::Helpers.const_defined?(:Lex)
         end

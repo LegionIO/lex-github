@@ -53,4 +53,36 @@ RSpec.describe Legion::Extensions::Github::Runners::PullRequests do
       expect(result[:result]['merged']).to be true
     end
   end
+
+  describe '#update_pull_request' do
+    it 'updates a pull request' do
+      stubs.patch('/repos/octocat/Hello-World/pulls/42') do
+        [200, { 'Content-Type' => 'application/json' }, { 'title' => 'Updated title' }]
+      end
+      result = client.update_pull_request(owner: 'octocat', repo: 'Hello-World', pull_number: 42, title: 'Updated title')
+      expect(result[:result]['title']).to eq('Updated title')
+    end
+  end
+
+  describe '#list_pull_request_files' do
+    it 'returns files changed in a pull request' do
+      stubs.get('/repos/octocat/Hello-World/pulls/42/files') do
+        [200, { 'Content-Type' => 'application/json' }, [{ 'filename' => 'README.md' }]]
+      end
+      result = client.list_pull_request_files(owner: 'octocat', repo: 'Hello-World', pull_number: 42)
+      expect(result[:result]).to be_an(Array)
+      expect(result[:result].first['filename']).to eq('README.md')
+    end
+  end
+
+  describe '#list_pull_request_reviews' do
+    it 'returns reviews for a pull request' do
+      stubs.get('/repos/octocat/Hello-World/pulls/42/reviews') do
+        [200, { 'Content-Type' => 'application/json' }, [{ 'state' => 'APPROVED' }]]
+      end
+      result = client.list_pull_request_reviews(owner: 'octocat', repo: 'Hello-World', pull_number: 42)
+      expect(result[:result]).to be_an(Array)
+      expect(result[:result].first['state']).to eq('APPROVED')
+    end
+  end
 end

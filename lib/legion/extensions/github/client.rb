@@ -8,6 +8,7 @@ require 'legion/extensions/github/runners/users'
 require 'legion/extensions/github/runners/organizations'
 require 'legion/extensions/github/runners/gists'
 require 'legion/extensions/github/runners/search'
+require 'legion/extensions/github/runners/commits'
 
 module Legion
   module Extensions
@@ -21,6 +22,7 @@ module Legion
         include Runners::Organizations
         include Runners::Gists
         include Runners::Search
+        include Runners::Commits
 
         attr_reader :opts
 

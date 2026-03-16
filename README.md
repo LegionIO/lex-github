@@ -1,6 +1,6 @@
 # lex-github
 
-GitHub integration for [LegionIO](https://github.com/LegionIO/LegionIO). Provides runners for interacting with the GitHub REST API including repositories, issues, pull requests, users, organizations, gists, and search.
+GitHub integration for [LegionIO](https://github.com/LegionIO/LegionIO). Provides runners for interacting with the GitHub REST API including repositories, issues, pull requests, labels, comments, commits, users, organizations, gists, and search.
 
 ## Installation
 
@@ -28,6 +28,18 @@ client.create_issue(owner: 'octocat', repo: 'Hello-World', title: 'Bug report')
 client.list_pull_requests(owner: 'octocat', repo: 'Hello-World')
 client.create_pull_request(owner: 'octocat', repo: 'Hello-World', title: 'Fix', head: 'fix-branch', base: 'main')
 client.merge_pull_request(owner: 'octocat', repo: 'Hello-World', pull_number: 42)
+client.list_pull_request_reviews(owner: 'octocat', repo: 'Hello-World', pull_number: 42)
+
+# Labels
+client.list_labels(owner: 'octocat', repo: 'Hello-World')
+client.create_label(owner: 'octocat', repo: 'Hello-World', name: 'bug', color: 'd73a4a')
+client.add_labels_to_issue(owner: 'octocat', repo: 'Hello-World', issue_number: 1, labels: ['bug'])
+
+# Comments
+client.list_comments(owner: 'octocat', repo: 'Hello-World', issue_number: 1)
+client.create_comment(owner: 'octocat', repo: 'Hello-World', issue_number: 1, body: 'Looks good!')
+client.update_comment(owner: 'octocat', repo: 'Hello-World', comment_id: 42, body: 'Updated text')
+client.delete_comment(owner: 'octocat', repo: 'Hello-World', comment_id: 42)
 
 # Users
 client.get_authenticated_user
@@ -73,6 +85,23 @@ client.search_issues(query: 'bug label:bug')
 - `merge_pull_request` - Merge a pull request
 - `list_pull_request_commits` - List commits on a PR
 - `list_pull_request_files` - List files changed in a PR
+- `list_pull_request_reviews` - List reviews on a PR
+
+### Labels
+- `list_labels` - List labels for a repository
+- `get_label` - Get a single label by name
+- `create_label` - Create a new label
+- `update_label` - Update a label
+- `delete_label` - Delete a label
+- `add_labels_to_issue` - Add labels to an issue
+- `remove_label_from_issue` - Remove a label from an issue
+
+### Comments
+- `list_comments` - List comments on an issue or PR
+- `get_comment` - Get a single comment by ID
+- `create_comment` - Create a comment on an issue or PR
+- `update_comment` - Update a comment
+- `delete_comment` - Delete a comment
 
 ### Users
 - `get_authenticated_user` - Get the authenticated user

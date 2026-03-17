@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    lex-github (0.1.0)
+    lex-github (0.2.0)
       faraday (>= 2.0)
 
 GEM

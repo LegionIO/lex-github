@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2026-03-18
+
+### Changed
+- deleted gemfile.lock
+
 ## [0.2.0] - 2026-03-15
 
 ### Added

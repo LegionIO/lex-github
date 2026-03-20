@@ -128,6 +128,11 @@ client.search_issues(query: 'bug label:bug')
 - `search_users` - Search users
 - `search_code` - Search code
 
+### Commits
+- `list_commits` - List commits on a repository
+- `get_commit` - Get a single commit by SHA
+- `compare_commits` - Compare two commits, branches, or tags
+
 ## Requirements
 
 - Ruby >= 3.4

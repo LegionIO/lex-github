@@ -56,6 +56,12 @@ module Legion
             { result: response.body }
           end
 
+          def create_review(owner:, repo:, pull_number:, body:, comments: [], event: 'COMMENT', **)
+            payload = { event: event, body: body, comments: comments }
+            response = connection(**).post("/repos/#{owner}/#{repo}/pulls/#{pull_number}/reviews", payload)
+            { result: response.body }
+          end
+
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers) &&
                                                       Legion::Extensions::Helpers.const_defined?(:Lex)
         end

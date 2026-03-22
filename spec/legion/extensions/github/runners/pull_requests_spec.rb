@@ -85,4 +85,33 @@ RSpec.describe Legion::Extensions::Github::Runners::PullRequests do
       expect(result[:result].first['state']).to eq('APPROVED')
     end
   end
+
+  describe '#create_review' do
+    it 'posts a COMMENT review with body and no inline comments' do
+      stubs.post('/repos/octocat/Hello-World/pulls/42/reviews') do
+        [200, { 'Content-Type' => 'application/json' }, { 'id' => 1, 'state' => 'COMMENTED' }]
+      end
+      result = client.create_review(owner: 'octocat', repo: 'Hello-World', pull_number: 42, body: 'Looks good overall')
+      expect(result[:result]['state']).to eq('COMMENTED')
+    end
+
+    it 'posts inline comments when provided' do
+      stubs.post('/repos/octocat/Hello-World/pulls/42/reviews') do
+        [200, { 'Content-Type' => 'application/json' }, { 'id' => 2, 'state' => 'COMMENTED' }]
+      end
+      inline = [{ path: 'lib/foo.rb', position: 3, body: 'Nit: rename this' }]
+      result = client.create_review(owner: 'octocat', repo: 'Hello-World', pull_number: 42, body: 'See inline', comments: inline)
+      expect(result[:result]['id']).to eq(2)
+    end
+
+    it 'defaults event to COMMENT' do
+      captured_body = nil
+      stubs.post('/repos/octocat/Hello-World/pulls/42/reviews') do |env|
+        captured_body = JSON.parse(env.body)
+        [200, { 'Content-Type' => 'application/json' }, { 'id' => 3 }]
+      end
+      client.create_review(owner: 'octocat', repo: 'Hello-World', pull_number: 42, body: 'review body')
+      expect(captured_body['event']).to eq('COMMENT')
+    end
+  end
 end

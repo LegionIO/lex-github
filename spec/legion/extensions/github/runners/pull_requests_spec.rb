@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'json'
+
 RSpec.describe Legion::Extensions::Github::Runners::PullRequests do
   let(:client) { Legion::Extensions::Github::Client.new(token: 'test-token') }
   let(:stubs) { Faraday::Adapter::Test::Stubs.new }
@@ -96,12 +98,17 @@ RSpec.describe Legion::Extensions::Github::Runners::PullRequests do
     end
 
     it 'posts inline comments when provided' do
-      stubs.post('/repos/octocat/Hello-World/pulls/42/reviews') do
+      captured_body = nil
+      stubs.post('/repos/octocat/Hello-World/pulls/42/reviews') do |env|
+        captured_body = JSON.parse(env.body)
         [200, { 'Content-Type' => 'application/json' }, { 'id' => 2, 'state' => 'COMMENTED' }]
       end
       inline = [{ path: 'lib/foo.rb', position: 3, body: 'Nit: rename this' }]
       result = client.create_review(owner: 'octocat', repo: 'Hello-World', pull_number: 42, body: 'See inline', comments: inline)
       expect(result[:result]['id']).to eq(2)
+      expect(captured_body['comments']).to be_an(Array)
+      expect(captured_body['comments'].first['path']).to eq('lib/foo.rb')
+      expect(captured_body['comments'].first['body']).to eq('Nit: rename this')
     end
 
     it 'defaults event to COMMENT' do

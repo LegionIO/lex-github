@@ -10,7 +10,7 @@ Legion Extension that connects LegionIO to GitHub. Provides runners for interact
 
 **GitHub**: https://github.com/LegionIO/lex-github
 **License**: MIT
-**Version**: 0.2.1
+**Version**: 0.2.2
 
 ## Architecture
 

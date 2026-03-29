@@ -6,11 +6,11 @@
 
 ## Purpose
 
-Legion Extension that connects LegionIO to GitHub. Provides runners for interacting with the GitHub REST API covering repositories, issues, pull requests, users, organizations, gists, search, labels, comments, and commits.
+Legion Extension that connects LegionIO to GitHub. Provides runners for interacting with the GitHub REST API covering repositories, issues, pull requests, users, organizations, gists, search, labels, comments, commits, branches, and file contents.
 
 **GitHub**: https://github.com/LegionIO/lex-github
 **License**: MIT
-**Version**: 0.2.2
+**Version**: 0.2.4
 
 ## Architecture
 
@@ -26,7 +26,9 @@ Legion::Extensions::Github
 │   ├── Search            # Search repos, issues, users, code
 │   ├── Labels            # CRUD labels, add/remove issue labels
 │   ├── Comments          # CRUD issue/PR comments
-│   └── Commits           # List, get, compare commits
+│   ├── Commits           # List, get, compare commits
+│   ├── Branches          # Create branches via Git Data API
+│   └── Contents          # Commit multiple files via Git Data API
 ├── Helpers/
 │   └── Client            # Faraday connection builder (GitHub API v3)
 └── Client                # Standalone client class (includes all runners)
@@ -55,10 +57,12 @@ Legion::Extensions::Github
 | `lib/legion/extensions/github/runners/labels.rb` | Label CRUD, add/remove on issues |
 | `lib/legion/extensions/github/runners/comments.rb` | Issue/PR comment CRUD |
 | `lib/legion/extensions/github/runners/commits.rb` | List, get, compare commits |
+| `lib/legion/extensions/github/runners/branches.rb` | Create branches via Git Data API |
+| `lib/legion/extensions/github/runners/contents.rb` | Commit multiple files via Git Data API |
 
 ## Testing
 
-47 specs across 12 spec files.
+57 specs across 14 spec files.
 
 ```bash
 bundle install

@@ -12,6 +12,8 @@ require 'legion/extensions/github/runners/search'
 require 'legion/extensions/github/runners/commits'
 require 'legion/extensions/github/runners/labels'
 require 'legion/extensions/github/runners/comments'
+require 'legion/extensions/github/runners/branches'
+require 'legion/extensions/github/runners/contents'
 require 'legion/extensions/github/client'
 
 module Legion

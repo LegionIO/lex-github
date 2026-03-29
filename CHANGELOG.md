@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4] - 2026-03-28
+
+### Added
+- `Runners::Branches` — `create_branch` using the Git Data API (GET ref + POST refs)
+- `Runners::Contents` — `commit_files` for multi-file commits via the Git Data API (ref, commit, tree, new commit, ref update)
+- Specs for both new runners (57 total, up from 47)
+
 ## [0.2.3] - 2026-03-22
 
 ### Changed

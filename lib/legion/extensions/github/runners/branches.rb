@@ -18,6 +18,7 @@ module Legion
 
             { success: true, ref: create_response.body['ref'], sha: sha }
           rescue StandardError => e
+            log.warn(e.message) if respond_to?(:log, true)
             { success: false, error: e.message }
           end
 

@@ -33,6 +33,7 @@ module Legion
 
             { success: true, commit_sha: new_commit.body['sha'], tree_sha: new_tree.body['sha'] }
           rescue StandardError => e
+            log.warn(e.message) if respond_to?(:log, true)
             { success: false, error: e.message }
           end
 

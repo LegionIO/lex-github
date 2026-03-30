@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0] - 2026-03-30
+
+### Added
+- GitHub App authentication (JWT generation, installation tokens via `App::Runners::Auth`)
+- OAuth delegated user authentication (Authorization Code + PKCE, device code flow via `OAuth::Runners::Auth`)
+- GitHub App manifest flow for streamlined app registration (`App::Runners::Manifest`)
+- Webhook signature verification and event parsing (`App::Runners::Webhooks`)
+- 8-source credential resolution chain: Vault delegated → Settings delegated → Vault App → Settings App → Vault PAT → Settings PAT → GH CLI → ENV (`Helpers::Client`)
+- Rate limit fallback across credential sources with scope-aware skipping (`Helpers::ScopeRegistry`)
+- Token lifecycle management with expiry tracking and rate limit recording (`Helpers::TokenCache`)
+- Two-tier API response caching (global Redis + local in-memory) with configurable per-resource TTLs (`Helpers::Cache`)
+- `jwt` (~> 2.7) and `base64` (>= 0.1) runtime dependencies
+
 ## [0.2.5] - 2026-03-30
 
 ### Changed

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/github/helpers/client'
+require 'legion/extensions/github/helpers/cache'
 
 module Legion
   module Extensions
@@ -8,6 +9,7 @@ module Legion
       module Runners
         module Contents
           include Legion::Extensions::Github::Helpers::Client
+          include Legion::Extensions::Github::Helpers::Cache
 
           def commit_files(owner:, repo:, branch:, files:, message:, **)
             conn = connection(**)

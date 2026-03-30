@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/github/helpers/client'
+require 'legion/extensions/github/helpers/cache'
 
 module Legion
   module Extensions
@@ -8,16 +9,15 @@ module Legion
       module Runners
         module Comments
           include Legion::Extensions::Github::Helpers::Client
+          include Legion::Extensions::Github::Helpers::Cache
 
           def list_comments(owner:, repo:, issue_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            response = connection(**).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params)
-            { result: response.body }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") { connection(**).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body } }
           end
 
           def get_comment(owner:, repo:, comment_id:, **)
-            response = connection(**).get("/repos/#{owner}/#{repo}/issues/comments/#{comment_id}")
-            { result: response.body }
+            { result: cached_get("github:repo:#{owner}/#{repo}:comments:#{comment_id}") { connection(**).get("/repos/#{owner}/#{repo}/issues/comments/#{comment_id}").body } }
           end
 
           def create_comment(owner:, repo:, issue_number:, body:, **)
@@ -27,11 +27,13 @@ module Legion
 
           def update_comment(owner:, repo:, comment_id:, body:, **)
             response = connection(**).patch("/repos/#{owner}/#{repo}/issues/comments/#{comment_id}", { body: body })
+            cache_write("github:repo:#{owner}/#{repo}:comments:#{comment_id}", response.body) if response.body['id']
             { result: response.body }
           end
 
           def delete_comment(owner:, repo:, comment_id:, **)
             response = connection(**).delete("/repos/#{owner}/#{repo}/issues/comments/#{comment_id}")
+            cache_invalidate("github:repo:#{owner}/#{repo}:comments:#{comment_id}") if response.status == 204
             { result: response.status == 204 }
           end
 

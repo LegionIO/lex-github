@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/github/helpers/client'
+require 'legion/extensions/github/helpers/cache'
 
 module Legion
   module Extensions
@@ -8,6 +9,7 @@ module Legion
       module Runners
         module Branches
           include Legion::Extensions::Github::Helpers::Client
+          include Legion::Extensions::Github::Helpers::Cache
 
           def create_branch(owner:, repo:, branch:, from_ref: 'main', **)
             ref_response = connection(**).get("/repos/#{owner}/#{repo}/git/ref/heads/#{from_ref}")

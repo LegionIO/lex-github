@@ -60,6 +60,12 @@ module Legion
             end
           end
 
+          def cache_connected?
+            ::Legion::Cache.connected?
+          rescue StandardError
+            false
+          end
+
           def local_cache_connected?
             false
           end

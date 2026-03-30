@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/github/helpers/client'
+require 'legion/extensions/github/helpers/cache'
 
 module Legion
   module Extensions
@@ -8,25 +9,22 @@ module Legion
       module Runners
         module Users
           include Legion::Extensions::Github::Helpers::Client
+          include Legion::Extensions::Github::Helpers::Cache
 
           def get_authenticated_user(**)
-            response = connection(**).get('/user')
-            { result: response.body }
+            { result: cached_get('github:user:authenticated') { connection(**).get('/user').body } }
           end
 
           def get_user(username:, **)
-            response = connection(**).get("/users/#{username}")
-            { result: response.body }
+            { result: cached_get("github:user:#{username}") { connection(**).get("/users/#{username}").body } }
           end
 
           def list_followers(username:, per_page: 30, page: 1, **)
-            response = connection(**).get("/users/#{username}/followers", per_page: per_page, page: page)
-            { result: response.body }
+            { result: cached_get("github:user:#{username}:followers:#{page}:#{per_page}") { connection(**).get("/users/#{username}/followers", per_page: per_page, page: page).body } }
           end
 
           def list_following(username:, per_page: 30, page: 1, **)
-            response = connection(**).get("/users/#{username}/following", per_page: per_page, page: page)
-            { result: response.body }
+            { result: cached_get("github:user:#{username}:following:#{page}:#{per_page}") { connection(**).get("/users/#{username}/following", per_page: per_page, page: page).body } }
           end
 
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

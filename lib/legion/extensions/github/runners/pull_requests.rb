@@ -13,7 +13,7 @@ module Legion
 
           def list_pull_requests(owner:, repo:, state: 'open', per_page: 30, page: 1, **)
             params = { state: state, per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{page}:#{per_page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{state}:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls", params).body
             end }
           end
@@ -47,21 +47,21 @@ module Legion
 
           def list_pull_request_commits(owner:, repo:, pull_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:commits:#{page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:commits:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/commits", params).body
             end }
           end
 
           def list_pull_request_files(owner:, repo:, pull_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:files:#{page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:files:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/files", params).body
             end }
           end
 
           def list_pull_request_reviews(owner:, repo:, pull_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:reviews:#{page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:reviews:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/reviews", params).body
             end }
           end

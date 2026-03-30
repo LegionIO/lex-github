@@ -109,7 +109,7 @@ client.create_webhook(owner: 'octocat', repo: 'Hello-World',
                       config: { url: 'https://example.com/webhook', content_type: 'json' })
 
 # GitHub App
-client.generate_jwt(app_id: '12345', private_key: File.read('private-key.pem'))
+jwt_token = client.generate_jwt(app_id: '12345', private_key: File.read('private-key.pem'))
 client.create_installation_token(jwt: jwt_token, installation_id: '67890')
 client.list_installations(jwt: jwt_token)
 

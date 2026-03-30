@@ -23,11 +23,11 @@ module Legion
 
           def list_org_repos(org:, type: 'all', per_page: 30, page: 1, **)
             params = { type: type, per_page: per_page, page: page }
-            { result: cached_get("github:org:#{org}:repos:#{page}") { connection(owner: org, **).get("/orgs/#{org}/repos", params).body } }
+            { result: cached_get("github:org:#{org}:repos:#{type}:#{page}:#{per_page}") { connection(owner: org, **).get("/orgs/#{org}/repos", params).body } }
           end
 
           def list_org_members(org:, per_page: 30, page: 1, **)
-            { result: cached_get("github:org:#{org}:members:#{page}") do
+            { result: cached_get("github:org:#{org}:members:#{page}:#{per_page}") do
               connection(owner: org, **).get("/orgs/#{org}/members", per_page: per_page, page: page).body
             end }
           end

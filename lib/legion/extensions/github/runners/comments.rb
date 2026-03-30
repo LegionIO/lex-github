@@ -13,7 +13,7 @@ module Legion
 
           def list_comments(owner:, repo:, issue_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body
             end }
           end

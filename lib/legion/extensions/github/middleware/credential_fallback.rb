@@ -25,7 +25,8 @@ module Legion
             while retries < max && should_retry?(response)
               notify_resolver(response)
 
-              next_credential = @resolver&.resolve_next_credential
+              owner, repo = extract_owner_repo_from_env(env)
+              next_credential = @resolver&.resolve_next_credential(owner: owner, repo: repo)
               break unless next_credential
 
               env[:request_headers]['Authorization'] = "Bearer #{next_credential[:token]}"
@@ -45,6 +46,12 @@ module Legion
             return false unless IDEMPOTENT_METHODS.include?(response.env[:method].to_s.upcase)
 
             RETRYABLE_STATUSES.include?(response.status)
+          end
+
+          def extract_owner_repo_from_env(env)
+            path = env.url&.path.to_s
+            match = path.match(%r{^/repos/([^/]+)/([^/]+)})
+            match ? [match[1], match[2]] : [nil, nil]
           end
 
           def notify_resolver(response)

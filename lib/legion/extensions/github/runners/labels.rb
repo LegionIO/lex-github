@@ -13,7 +13,7 @@ module Legion
 
           def list_labels(owner:, repo:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:labels:#{page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:labels:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/labels", params).body
             end }
           end

@@ -14,7 +14,7 @@ module Legion
           def list_commits(owner:, repo:, sha: nil, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
             params[:sha] = sha if sha
-            { result: cached_get("github:repo:#{owner}/#{repo}:commits:#{page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:commits:#{sha}:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/commits", params).body
             end }
           end
@@ -27,7 +27,7 @@ module Legion
 
           def compare_commits(owner:, repo:, base:, head:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:commits:compare:#{base}...#{head}:#{page}") do
+            { result: cached_get("github:repo:#{owner}/#{repo}:commits:compare:#{base}...#{head}:#{page}:#{per_page}") do
               connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/compare/#{base}...#{head}", params).body
             end }
           end

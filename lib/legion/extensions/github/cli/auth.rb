@@ -17,7 +17,7 @@ module Legion
 
             unless cid && csec
               return { error:       'missing_config',
-                       description: 'Set github.oauth.client_id and github.app.client_secret in settings or pass as arguments' }
+                       description: 'Set github.oauth.client_id or github.app.client_id and github.app.client_secret in settings or pass as arguments' }
             end
 
             browser = Helpers::BrowserAuth.new(client_id: cid, client_secret: csec, scopes: sc)

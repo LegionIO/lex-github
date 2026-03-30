@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/github/helpers/client'
+require 'legion/extensions/github/helpers/cache'
 require 'legion/extensions/github/runners/repositories'
 require 'legion/extensions/github/runners/issues'
 require 'legion/extensions/github/runners/pull_requests'
@@ -13,12 +14,17 @@ require 'legion/extensions/github/runners/labels'
 require 'legion/extensions/github/runners/comments'
 require 'legion/extensions/github/runners/branches'
 require 'legion/extensions/github/runners/contents'
+require 'legion/extensions/github/app/runners/auth'
+require 'legion/extensions/github/app/runners/webhooks'
+require 'legion/extensions/github/app/runners/manifest'
+require 'legion/extensions/github/oauth/runners/auth'
 
 module Legion
   module Extensions
     module Github
       class Client
         include Helpers::Client
+        include Helpers::Cache
         include Runners::Repositories
         include Runners::Issues
         include Runners::PullRequests
@@ -31,6 +37,10 @@ module Legion
         include Runners::Comments
         include Runners::Branches
         include Runners::Contents
+        include App::Runners::Auth
+        include App::Runners::Webhooks
+        include App::Runners::Manifest
+        include OAuth::Runners::Auth
 
         attr_reader :opts
 

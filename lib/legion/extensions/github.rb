@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/github/version'
+require 'legion/extensions/github/errors'
 require 'legion/extensions/github/middleware/rate_limit'
 require 'legion/extensions/github/middleware/scope_probe'
+require 'legion/extensions/github/middleware/credential_fallback'
 require 'legion/extensions/github/helpers/client'
 require 'legion/extensions/github/helpers/cache'
 require 'legion/extensions/github/helpers/token_cache'

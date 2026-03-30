@@ -3,6 +3,8 @@
 require 'legion/extensions/github/version'
 require 'legion/extensions/github/helpers/client'
 require 'legion/extensions/github/helpers/cache'
+require 'legion/extensions/github/helpers/token_cache'
+require 'legion/extensions/github/helpers/scope_registry'
 require 'legion/extensions/github/app/runners/auth'
 require 'legion/extensions/github/app/runners/webhooks'
 require 'legion/extensions/github/app/runners/manifest'

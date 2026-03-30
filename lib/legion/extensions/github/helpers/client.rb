@@ -3,6 +3,7 @@
 require 'faraday'
 require 'legion/extensions/github/helpers/token_cache'
 require 'legion/extensions/github/helpers/scope_registry'
+require 'legion/extensions/github/middleware/credential_fallback'
 
 module Legion
   module Extensions
@@ -23,8 +24,10 @@ module Legion
             resolved = token ? { token: token } : resolve_credential(owner: owner, repo: repo)
             resolved_token = resolved&.dig(:token)
             @current_credential = resolved
+            @skipped_fingerprints = []
 
             Faraday.new(url: api_url) do |conn|
+              conn.use :github_credential_fallback, resolver: self
               conn.request :json
               conn.response :json, content_type: /\bjson$/
               conn.response :github_rate_limit, handler: self
@@ -33,6 +36,31 @@ module Legion
               conn.headers['Authorization'] = "Bearer #{resolved_token}" if resolved_token
               conn.headers['X-GitHub-Api-Version'] = '2022-11-28'
             end
+          end
+
+          def resolve_next_credential
+            fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
+            @skipped_fingerprints ||= []
+            @skipped_fingerprints << fingerprint if fingerprint
+
+            CREDENTIAL_RESOLVERS.each do |method|
+              next unless respond_to?(method, true)
+
+              result = send(method)
+              next unless result
+
+              fp = result.dig(:metadata, :credential_fingerprint)
+              next if fp && @skipped_fingerprints.include?(fp)
+              next if fp && rate_limited?(fingerprint: fp)
+
+              @current_credential = result
+              return result
+            end
+            nil
+          end
+
+          def max_fallback_retries
+            CREDENTIAL_RESOLVERS.size
           end
 
           def on_rate_limit(remaining:, reset_at:, status:, url:, **)  # rubocop:disable Lint/UnusedMethodArgument

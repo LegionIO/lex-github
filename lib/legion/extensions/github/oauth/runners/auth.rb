@@ -92,11 +92,12 @@ module Legion
               { result: response.status == 204 }
             end
 
-            def oauth_connection(**)
+            def oauth_connection(client_id: nil, client_secret: nil, **)
               Faraday.new(url: 'https://github.com') do |conn|
                 conn.request :json
                 conn.response :json, content_type: /\bjson$/
                 conn.headers['Accept'] = 'application/json'
+                conn.request :authorization, :basic, client_id, client_secret if client_id && client_secret
               end
             end
 

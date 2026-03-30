@@ -62,4 +62,33 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Webhooks do
       expect(result[:result][:payload]).to be_nil
     end
   end
+
+  describe '#resolve_known_fingerprints (no network calls)' do
+    before do
+      allow(runner).to receive(:cache_connected?).and_return(false)
+      allow(runner).to receive(:local_cache_connected?).and_return(false)
+      allow(runner).to receive(:safe_vault_get).and_return(nil)
+      allow(runner).to receive(:safe_settings_dig).and_return(nil)
+    end
+
+    it 'always includes CLI and ENV fingerprints' do
+      fingerprints = runner.send(:resolve_known_fingerprints)
+      cli_fp = runner.credential_fingerprint(auth_type: :cli, identifier: 'gh_cli')
+      env_fp = runner.credential_fingerprint(auth_type: :env, identifier: 'env')
+      expect(fingerprints).to include(cli_fp)
+      expect(fingerprints).to include(env_fp)
+    end
+
+    it 'includes vault app fingerprint when app_id is configured' do
+      allow(runner).to receive(:safe_vault_get).with('github/app/app_id').and_return('99999')
+      fingerprints = runner.send(:resolve_known_fingerprints)
+      expected_fp = runner.credential_fingerprint(auth_type: :app_installation, identifier: 'vault_app_99999')
+      expect(fingerprints).to include(expected_fp)
+    end
+
+    it 'returns empty array on error' do
+      allow(runner).to receive(:credential_fingerprint).and_raise(StandardError, 'boom')
+      expect(runner.send(:resolve_known_fingerprints)).to eq([])
+    end
+  end
 end

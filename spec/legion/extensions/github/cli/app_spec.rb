@@ -10,6 +10,7 @@ RSpec.describe Legion::Extensions::Github::CLI::App do
     allow(server).to receive(:shutdown)
     allow(server).to receive(:port).and_return(12_345)
     allow(server).to receive(:redirect_uri).and_return('http://127.0.0.1:12345/callback')
+    allow(server).to receive(:wait_for_callback).and_return({ code: 'manifest-code', state: nil })
   end
 
   describe '#setup' do
@@ -30,6 +31,24 @@ RSpec.describe Legion::Extensions::Github::CLI::App do
         org:         'LegionIO'
       )
       expect(result[:result][:manifest_url]).to include('/organizations/LegionIO/')
+    end
+
+    it 'waits for callback before returning' do
+      cli.setup(
+        name:        'LegionIO Bot',
+        url:         'https://legionio.dev',
+        webhook_url: 'https://legion.example.com/webhook'
+      )
+      expect(server).to have_received(:wait_for_callback)
+    end
+
+    it 'includes callback result in response' do
+      result = cli.setup(
+        name:        'LegionIO Bot',
+        url:         'https://legionio.dev',
+        webhook_url: 'https://legion.example.com/webhook'
+      )
+      expect(result[:result][:callback]).to eq({ code: 'manifest-code', state: nil })
     end
   end
 

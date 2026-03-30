@@ -38,7 +38,7 @@ module Legion
             end
           end
 
-          def resolve_next_credential
+          def resolve_next_credential(owner: nil, repo: nil)
             fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
             @skipped_fingerprints ||= []
             @skipped_fingerprints << fingerprint if fingerprint
@@ -52,6 +52,11 @@ module Legion
               fp = result.dig(:metadata, :credential_fingerprint)
               next if fp && @skipped_fingerprints.include?(fp)
               next if fp && rate_limited?(fingerprint: fp)
+
+              if owner && fp
+                scope = scope_status(fingerprint: fp, owner: owner, repo: repo)
+                next if scope == :denied
+              end
 
               @current_credential = result
               return result

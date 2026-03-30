@@ -114,11 +114,35 @@ RSpec.describe Legion::Extensions::Github::OAuth::Runners::Auth do
       )
       expect(result[:error]).to eq('timeout')
     end
+
+    it 'returns error when device code is denied' do
+      stubs.post('/login/oauth/access_token') do
+        [200, { 'Content-Type' => 'application/json' },
+         { error: 'access_denied', error_description: 'User denied access' }]
+      end
+
+      result = runner.poll_device_code(
+        client_id: 'Iv1.abc', device_code: 'dc_123',
+        interval: 0, timeout: 30
+      )
+      expect(result[:error]).to eq('access_denied')
+      expect(result[:description]).to eq('User denied access')
+    end
   end
 
   describe '#revoke_token' do
-    it 'revokes an access token' do
-      stubs.delete('/applications/Iv1.abc/token') do
+    it 'revokes an access token using Basic auth' do
+      basic_auth_stubs = Faraday::Adapter::Test::Stubs.new
+      basic_auth_connection = Faraday.new(url: 'https://github.com') do |conn|
+        conn.request :json
+        conn.response :json, content_type: /\bjson$/
+        conn.adapter :test, basic_auth_stubs
+      end
+      allow(runner).to receive(:oauth_connection)
+        .with(client_id: 'Iv1.abc', client_secret: 'secret')
+        .and_return(basic_auth_connection)
+
+      basic_auth_stubs.delete('/applications/Iv1.abc/token') do
         [204, {}, '']
       end
 

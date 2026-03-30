@@ -14,7 +14,7 @@ module Legion
           include Github::App::Runners::Manifest
           include Github::App::Runners::CredentialStore
 
-          def setup(name:, url:, webhook_url:, org: nil, **)
+          def setup(name:, url:, webhook_url:, org: nil, callback_timeout: 300, **)
             server = Helpers::CallbackServer.new
             server.start
             callback_url = server.redirect_uri
@@ -28,7 +28,8 @@ module Legion
             url_result = manifest_url(manifest: manifest, org: org)[:result]
 
             { result: { manifest_url: url_result, callback_port: server.port,
-                        message: 'Open the manifest URL in your browser to create the GitHub App' } }
+                        message: 'Open the manifest URL in your browser to create the GitHub App',
+                        callback: server.wait_for_callback(timeout: callback_timeout) } }
           ensure
             server&.shutdown
           end

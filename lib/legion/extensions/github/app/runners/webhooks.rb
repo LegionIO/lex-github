@@ -62,18 +62,50 @@ module Legion
 
             def resolve_known_fingerprints
               fingerprints = []
-              Legion::Extensions::Github::Helpers::Client::CREDENTIAL_RESOLVERS.each do |method|
-                next unless respond_to?(method, true)
 
-                result = send(method)
-                next unless result
+              # Delegated (OAuth user) — check Vault and settings without resolving tokens
+              fingerprints << credential_fingerprint(auth_type: :oauth_user, identifier: 'vault_delegated') if vault_delegated_configured?
+              fingerprints << credential_fingerprint(auth_type: :oauth_user, identifier: 'settings_delegated') if settings_delegated_configured?
 
-                fp = result.dig(:metadata, :credential_fingerprint)
-                fingerprints << fp if fp
+              # App installation — derive from app_id without generating installation tokens
+              if (vault_app_id = safe_vault_get('github/app/app_id'))
+                fingerprints << credential_fingerprint(auth_type: :app_installation, identifier: "vault_app_#{vault_app_id}")
               end
+              if (settings_app_id = safe_settings_dig(:github, :app, :app_id))
+                fingerprints << credential_fingerprint(auth_type: :app_installation, identifier: "settings_app_#{settings_app_id}")
+              end
+
+              # PAT
+              fingerprints << credential_fingerprint(auth_type: :pat, identifier: 'vault_pat') if safe_vault_get('github/token')
+              fingerprints << credential_fingerprint(auth_type: :pat, identifier: 'settings_pat') if safe_settings_dig(:github, :token)
+
+              # CLI and ENV
+              fingerprints << credential_fingerprint(auth_type: :cli, identifier: 'gh_cli')
+              fingerprints << credential_fingerprint(auth_type: :env, identifier: 'env')
+
               fingerprints.uniq
             rescue StandardError => _e
               []
+            end
+
+            def vault_delegated_configured?
+              defined?(Legion::Crypt) && safe_vault_get('github/oauth/delegated/token')
+            end
+
+            def settings_delegated_configured?
+              defined?(Legion::Settings) && safe_settings_dig(:github, :oauth, :access_token)
+            end
+
+            def safe_vault_get(path)
+              vault_get(path) if defined?(Legion::Crypt)
+            rescue StandardError => _e
+              nil
+            end
+
+            def safe_settings_dig(*keys)
+              Legion::Settings.dig(*keys) if defined?(Legion::Settings)
+            rescue StandardError => _e
+              nil
             end
 
             include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

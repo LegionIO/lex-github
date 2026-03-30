@@ -112,6 +112,59 @@ RSpec.describe Legion::Extensions::Github::Helpers::Client do
     end
   end
 
+  describe '#resolve_next_credential' do
+    before do
+      allow(helper).to receive(:resolve_vault_delegated).and_return(nil)
+      allow(helper).to receive(:resolve_settings_delegated).and_return(nil)
+      allow(helper).to receive(:resolve_vault_app).and_return(nil)
+      allow(helper).to receive(:resolve_settings_app).and_return(nil)
+      allow(helper).to receive(:resolve_vault_pat).and_return(nil)
+      allow(helper).to receive(:resolve_settings_pat).and_return(nil)
+      allow(helper).to receive(:resolve_gh_cli).and_return(nil)
+      allow(helper).to receive(:resolve_env).and_return(nil)
+    end
+
+    it 'returns nil when all resolvers are exhausted' do
+      helper.instance_variable_set(:@current_credential, nil)
+      helper.instance_variable_set(:@skipped_fingerprints, [])
+      expect(helper.resolve_next_credential).to be_nil
+    end
+
+    it 'skips the current credential fingerprint' do
+      delegated = { token: 'del', auth_type: :oauth_user,
+                    metadata: { source: :vault, credential_fingerprint: 'fp_d' } }
+      app = { token: 'app', auth_type: :app_installation,
+              metadata: { source: :vault, credential_fingerprint: 'fp_a' } }
+      helper.instance_variable_set(:@current_credential,
+                                   { metadata: { credential_fingerprint: 'fp_d' } })
+      helper.instance_variable_set(:@skipped_fingerprints, [])
+      allow(helper).to receive(:resolve_vault_delegated).and_return(delegated)
+      allow(helper).to receive(:resolve_vault_app).and_return(app)
+      allow(helper).to receive(:rate_limited?).and_return(false)
+      allow(helper).to receive(:scope_status).and_return(:unknown)
+      result = helper.resolve_next_credential
+      expect(result[:auth_type]).to eq(:app_installation)
+    end
+
+    it 'skips scope-denied credentials for a given owner/repo' do
+      delegated = { token: 'del', auth_type: :oauth_user,
+                    metadata: { source: :vault, credential_fingerprint: 'fp_d' } }
+      app = { token: 'app', auth_type: :app_installation,
+              metadata: { source: :vault, credential_fingerprint: 'fp_a' } }
+      helper.instance_variable_set(:@current_credential, nil)
+      helper.instance_variable_set(:@skipped_fingerprints, [])
+      allow(helper).to receive(:resolve_vault_delegated).and_return(delegated)
+      allow(helper).to receive(:resolve_vault_app).and_return(app)
+      allow(helper).to receive(:rate_limited?).and_return(false)
+      allow(helper).to receive(:scope_status)
+        .with(fingerprint: 'fp_d', owner: 'OrgX', repo: 'repoY').and_return(:denied)
+      allow(helper).to receive(:scope_status)
+        .with(fingerprint: 'fp_a', owner: 'OrgX', repo: 'repoY').and_return(:unknown)
+      result = helper.resolve_next_credential(owner: 'OrgX', repo: 'repoY')
+      expect(result[:auth_type]).to eq(:app_installation)
+    end
+  end
+
   describe '#resolve_gh_cli' do
     it 'returns token from gh auth token command' do
       allow(helper).to receive(:gh_cli_token_output).and_return('ghp_cli123')

@@ -6,11 +6,11 @@
 
 ## Purpose
 
-Legion Extension that connects LegionIO to GitHub. Provides runners for interacting with the GitHub REST API covering repositories, issues, pull requests, users, organizations, gists, search, labels, comments, commits, branches, and file contents.
+Legion Extension that connects LegionIO to GitHub. Provides runners for interacting with the GitHub REST API covering repositories, issues, pull requests, users, organizations, gists, search, labels, comments, commits, branches, file contents, GitHub App authentication, OAuth delegated auth, and webhook handling.
 
 **GitHub**: https://github.com/LegionIO/lex-github
 **License**: MIT
-**Version**: 0.2.4
+**Version**: 0.3.0
 
 ## Architecture
 
@@ -29,40 +29,66 @@ Legion::Extensions::Github
 │   ├── Commits           # List, get, compare commits
 │   ├── Branches          # Create branches via Git Data API
 │   └── Contents          # Commit multiple files via Git Data API
+├── App/
+│   └── Runners/
+│       ├── Auth          # JWT generation, installation token exchange, list/get installations
+│       ├── Webhooks      # HMAC signature verification, event parsing
+│       ├── Manifest      # GitHub App manifest flow (generate, exchange code, manifest URL)
+│       └── Installations # Full installation management (list repos, suspend, delete)
+├── OAuth/
+│   └── Runners/
+│       └── Auth          # PKCE + Authorization Code, device code, refresh, revoke
 ├── Helpers/
-│   └── Client            # Faraday connection builder (GitHub API v3)
+│   ├── Client            # 8-source scope-aware credential resolution chain + Faraday builder
+│   ├── Cache             # Two-tier read-through/write-through API response caching
+│   ├── TokenCache        # Token lifecycle management (store, fetch, expiry, rate limits)
+│   └── ScopeRegistry     # Credential-to-scope authorization cache (org/repo level)
 └── Client                # Standalone client class (includes all runners)
 ```
+
+### Credential Resolution Chain (8 sources, in priority order)
+
+1. `resolve_vault_delegated` — OAuth user token from Vault (`github/oauth/delegated/token`)
+2. `resolve_settings_delegated` — OAuth user token from `Legion::Settings[:github][:oauth][:access_token]`
+3. `resolve_vault_app` — GitHub App installation token (requires cached token from `TokenCache`)
+4. `resolve_settings_app` — App token from settings (requires cached token)
+5. `resolve_vault_pat` — PAT from Vault (`github/token`)
+6. `resolve_settings_pat` — PAT from `Legion::Settings[:github][:token]`
+7. `resolve_gh_cli` — Token from `gh auth token` CLI command (cached 300s)
+8. `resolve_env` — `GITHUB_TOKEN` environment variable
+
+Rate-limited credentials are skipped. Scope-denied credentials (for a given owner/repo) are skipped.
 
 ## Dependencies
 
 | Gem | Purpose |
 |-----|---------|
 | `faraday` | HTTP client for GitHub REST API |
+| `jwt` (~> 2.7) | RS256 JWT generation for GitHub App authentication |
+| `base64` (>= 0.1) | PKCE code challenge computation |
+| `legion-cache` | Two-tier caching (global Redis + local in-memory) |
+| `legion-crypt` | Vault secret resolution for credentials |
+| `legion-settings` | Settings-based credential resolution |
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `lib/legion/extensions/github.rb` | Extension entry point, requires all runners |
-| `lib/legion/extensions/github/client.rb` | Standalone client class |
-| `lib/legion/extensions/github/helpers/client.rb` | Faraday connection builder |
-| `lib/legion/extensions/github/runners/repositories.rb` | Repo CRUD, branches, tags |
-| `lib/legion/extensions/github/runners/issues.rb` | Issue CRUD |
-| `lib/legion/extensions/github/runners/pull_requests.rb` | PR CRUD, merge, files, reviews |
-| `lib/legion/extensions/github/runners/users.rb` | User lookup, followers/following |
-| `lib/legion/extensions/github/runners/organizations.rb` | Org info, repos, members |
-| `lib/legion/extensions/github/runners/gists.rb` | Gist CRUD |
-| `lib/legion/extensions/github/runners/search.rb` | Search repos/issues/users/code |
-| `lib/legion/extensions/github/runners/labels.rb` | Label CRUD, add/remove on issues |
-| `lib/legion/extensions/github/runners/comments.rb` | Issue/PR comment CRUD |
-| `lib/legion/extensions/github/runners/commits.rb` | List, get, compare commits |
-| `lib/legion/extensions/github/runners/branches.rb` | Create branches via Git Data API |
-| `lib/legion/extensions/github/runners/contents.rb` | Commit multiple files via Git Data API |
+| `lib/legion/extensions/github.rb` | Extension entry point, requires all modules |
+| `lib/legion/extensions/github/client.rb` | Standalone client class (includes all runners) |
+| `lib/legion/extensions/github/helpers/client.rb` | Credential resolution chain + Faraday builder |
+| `lib/legion/extensions/github/helpers/cache.rb` | Two-tier API response caching |
+| `lib/legion/extensions/github/helpers/token_cache.rb` | Token lifecycle + rate limit tracking |
+| `lib/legion/extensions/github/helpers/scope_registry.rb` | Credential-to-scope authorization cache |
+| `lib/legion/extensions/github/app/runners/auth.rb` | JWT generation, installation tokens |
+| `lib/legion/extensions/github/app/runners/webhooks.rb` | Webhook signature verification, event parsing |
+| `lib/legion/extensions/github/app/runners/manifest.rb` | GitHub App manifest registration flow |
+| `lib/legion/extensions/github/app/runners/installations.rb` | Installation management |
+| `lib/legion/extensions/github/oauth/runners/auth.rb` | OAuth PKCE, device code, token refresh/revoke |
 
 ## Testing
 
-57 specs across 14 spec files.
+131 specs across 23 spec files (growing with each new runner).
 
 ```bash
 bundle install

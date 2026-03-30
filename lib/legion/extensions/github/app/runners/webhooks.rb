@@ -32,7 +32,44 @@ module Legion
               end
 
               parsed = parse_event(payload: payload, event_type: event_type, delivery_id: delivery_id)[:result]
+              invalidate_scopes_for_event(event_type: event_type, payload: parsed[:payload])
               { result: parsed.merge(verified: true) }
+            end
+
+            SCOPE_INVALIDATION_EVENTS = %w[installation installation_repositories].freeze
+
+            def invalidate_scopes_for_event(event_type:, payload:, **)
+              return unless SCOPE_INVALIDATION_EVENTS.include?(event_type.to_s)
+
+              owner = payload&.dig('installation', 'account', 'login')
+              return unless owner
+
+              invalidate_all_scopes_for_owner(owner: owner)
+            end
+
+            def invalidate_all_scopes_for_owner(owner:)
+              known_fingerprints = resolve_known_fingerprints
+              known_fingerprints.each do |fp|
+                invalidate_scope(fingerprint: fp, owner: owner)
+              end
+            end
+
+            private
+
+            def resolve_known_fingerprints
+              fingerprints = []
+              Legion::Extensions::Github::Helpers::Client::CREDENTIAL_RESOLVERS.each do |method|
+                next unless respond_to?(method, true)
+
+                result = send(method)
+                next unless result
+
+                fp = result.dig(:metadata, :credential_fingerprint)
+                fingerprints << fp if fp
+              end
+              fingerprints.uniq
+            rescue StandardError
+              []
             end
           end
         end

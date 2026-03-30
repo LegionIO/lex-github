@@ -12,7 +12,9 @@ module Legion
           include Legion::Extensions::Github::Helpers::Cache
 
           def list_repos(username:, per_page: 30, page: 1, **)
-            { result: cached_get("github:user:#{username}:repos:#{page}:#{per_page}") { connection(**).get("/users/#{username}/repos", per_page: per_page, page: page).body } }
+            { result: cached_get("github:user:#{username}:repos:#{page}:#{per_page}") do
+              connection(**).get("/users/#{username}/repos", per_page: per_page, page: page).body
+            end }
           end
 
           def get_repo(owner:, repo:, **)
@@ -40,11 +42,15 @@ module Legion
           end
 
           def list_branches(owner:, repo:, per_page: 30, page: 1, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:branches:#{page}:#{per_page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/branches", per_page: per_page, page: page).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:branches:#{page}:#{per_page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/branches", per_page: per_page, page: page).body
+            end }
           end
 
           def list_tags(owner:, repo:, per_page: 30, page: 1, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:tags:#{page}:#{per_page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/tags", per_page: per_page, page: page).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:tags:#{page}:#{per_page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/tags", per_page: per_page, page: page).body
+            end }
           end
 
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

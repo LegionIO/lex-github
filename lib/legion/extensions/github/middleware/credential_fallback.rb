@@ -19,7 +19,7 @@ module Legion
             return response unless should_retry?(response)
 
             retries = 0
-            max = @resolver&.respond_to?(:max_fallback_retries) ? @resolver.max_fallback_retries : 3
+            max = @resolver.respond_to?(:max_fallback_retries) ? @resolver.max_fallback_retries : 3
 
             while retries < max && should_retry?(response)
               notify_resolver(response)
@@ -39,19 +39,19 @@ module Legion
           private
 
           def should_retry?(response)
-            return false unless @resolver&.respond_to?(:credential_fallback?)
+            return false unless @resolver.respond_to?(:credential_fallback?)
             return false unless @resolver.credential_fallback?
 
             RETRYABLE_STATUSES.include?(response.status)
           end
 
           def notify_resolver(response)
-            if response.status == 429 && @resolver&.respond_to?(:on_rate_limit)
+            if response.status == 429 && @resolver.respond_to?(:on_rate_limit)
               reset = response.headers['x-ratelimit-reset']
               reset_at = reset ? Time.at(reset.to_i) : Time.now + 60
               @resolver.on_rate_limit(remaining: 0, reset_at: reset_at,
                                       status: 429, url: response.env.url.to_s)
-            elsif response.status == 403 && @resolver&.respond_to?(:on_scope_denied)
+            elsif response.status == 403 && @resolver.respond_to?(:on_scope_denied)
               @resolver.on_scope_denied(status: 403, url: response.env.url.to_s,
                                         path: response.env.url.path)
             end
@@ -62,6 +62,6 @@ module Legion
   end
 end
 
-::Faraday::Middleware.register_middleware(
+Faraday::Middleware.register_middleware(
   github_credential_fallback: Legion::Extensions::Github::Middleware::CredentialFallback
 )

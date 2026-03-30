@@ -24,7 +24,7 @@ module Legion
 
             def list_installation_repos(per_page: 30, page: 1, **)
               response = connection(**).get('/installation/repositories',
-                                           per_page: per_page, page: page)
+                                            per_page: per_page, page: page)
               { result: response.body }
             end
 
@@ -45,6 +45,9 @@ module Legion
               response = conn.delete("/app/installations/#{installation_id}")
               { result: response.status == 204 }
             end
+
+            include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                        Legion::Extensions::Helpers.const_defined?(:Lex, false)
           end
         end
       end

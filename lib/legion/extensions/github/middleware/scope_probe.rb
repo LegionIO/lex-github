@@ -7,7 +7,7 @@ module Legion
     module Github
       module Middleware
         class ScopeProbe < ::Faraday::Middleware
-          REPO_PATH_PATTERN = %r{^/repos/([^/]+)/([^/]+)}.freeze
+          REPO_PATH_PATTERN = %r{^/repos/([^/]+)/([^/]+)}
 
           def initialize(app, handler: nil)
             super(app)
@@ -20,7 +20,7 @@ module Legion
 
             info = { status: env.status, url: env.url.to_s, path: env.url.path }
 
-            if env.status == 403 || env.status == 404
+            if [403, 404].include?(env.status)
               @handler.on_scope_denied(info) if @handler.respond_to?(:on_scope_denied)
             elsif env.status >= 200 && env.status < 300
               @handler.on_scope_authorized(info) if @handler.respond_to?(:on_scope_authorized)
@@ -32,6 +32,6 @@ module Legion
   end
 end
 
-::Faraday::Response.register_middleware(
+Faraday::Response.register_middleware(
   github_scope_probe: Legion::Extensions::Github::Middleware::ScopeProbe
 )

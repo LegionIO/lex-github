@@ -13,9 +13,9 @@ RSpec.describe 'Webhook scope invalidation' do
   describe '#invalidate_scopes_for_event' do
     it 'invalidates org scope on installation.created' do
       payload = {
-        'action' => 'created',
+        'action'       => 'created',
         'installation' => {
-          'id' => 12345,
+          'id'      => 12_345,
           'account' => { 'login' => 'OrgZ', 'type' => 'Organization' }
         }
       }
@@ -25,9 +25,9 @@ RSpec.describe 'Webhook scope invalidation' do
 
     it 'invalidates org scope on installation.deleted' do
       payload = {
-        'action' => 'deleted',
+        'action'       => 'deleted',
         'installation' => {
-          'id' => 12345,
+          'id'      => 12_345,
           'account' => { 'login' => 'OrgZ', 'type' => 'Organization' }
         }
       }
@@ -37,9 +37,9 @@ RSpec.describe 'Webhook scope invalidation' do
 
     it 'invalidates repo scopes on installation_repositories.added' do
       payload = {
-        'action' => 'added',
-        'installation' => {
-          'id' => 12345,
+        'action'             => 'added',
+        'installation'       => {
+          'id'      => 12_345,
           'account' => { 'login' => 'OrgZ' }
         },
         'repositories_added' => [
@@ -53,9 +53,9 @@ RSpec.describe 'Webhook scope invalidation' do
 
     it 'invalidates repo scopes on installation_repositories.removed' do
       payload = {
-        'action' => 'removed',
-        'installation' => {
-          'id' => 12345,
+        'action'               => 'removed',
+        'installation'         => {
+          'id'      => 12_345,
           'account' => { 'login' => 'OrgZ' }
         },
         'repositories_removed' => [

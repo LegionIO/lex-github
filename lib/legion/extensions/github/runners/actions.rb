@@ -24,7 +24,7 @@ module Legion
           end
 
           def list_workflow_runs(owner:, repo:, workflow_id:, status: nil, branch: nil,
-                                per_page: 30, page: 1, **)
+                                 per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page, status: status, branch: branch }.compact
             response = connection(owner: owner, repo: repo, **).get(
               "/repos/#{owner}/#{repo}/actions/workflows/#{workflow_id}/runs", params
@@ -90,6 +90,9 @@ module Legion
             )
             { result: response.body }
           end
+
+          include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                      Legion::Extensions::Helpers.const_defined?(:Lex, false)
         end
       end
     end

@@ -72,13 +72,9 @@ module Legion
 
             result = server.wait_for_callback(timeout: 120)
 
-            unless result&.dig(:code)
-              return { error: 'timeout', description: 'No callback received within timeout' }
-            end
+            return { error: 'timeout', description: 'No callback received within timeout' } unless result&.dig(:code)
 
-            unless result[:state] == state
-              return { error: 'state_mismatch', description: 'CSRF state parameter mismatch' }
-            end
+            return { error: 'state_mismatch', description: 'CSRF state parameter mismatch' } unless result[:state] == state
 
             @auth.exchange_code(
               client_id: client_id, client_secret: client_secret,
@@ -94,13 +90,13 @@ module Legion
             return { error: dc[:error], description: dc[:description] } if dc[:error]
 
             body = dc[:result]
-            $stderr.puts "Go to:  #{body['verification_uri']}"
-            $stderr.puts "Code:   #{body['user_code']}"
-            open_browser(body['verification_uri']) if gui_available?
+            warn "Go to:  #{body[:verification_uri]}"
+            warn "Code:   #{body[:user_code]}"
+            open_browser(body[:verification_uri]) if gui_available?
 
             @auth.poll_device_code(
-              client_id: client_id,
-              device_code: body['device_code']
+              client_id:   client_id,
+              device_code: body[:device_code]
             )
           end
         end

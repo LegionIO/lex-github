@@ -16,7 +16,7 @@ module Legion
             sc = scopes || settings_scopes
 
             unless cid && csec
-              return { error: 'missing_config',
+              return { error:       'missing_config',
                        description: 'Set github.oauth.client_id and github.app.client_secret in settings or pass as arguments' }
             end
 
@@ -26,14 +26,14 @@ module Legion
             if result[:result]&.dig('access_token') && respond_to?(:store_oauth_token, true)
               user = begin
                 current_user(token: result[:result]['access_token'])
-              rescue StandardError
+              rescue StandardError => _e
                 'default'
               end
               store_oauth_token(
-                user: user,
-                access_token: result[:result]['access_token'],
+                user:          user,
+                access_token:  result[:result]['access_token'],
                 refresh_token: result[:result]['refresh_token'],
-                expires_in: result[:result]['expires_in']
+                expires_in:    result[:result]['expires_in']
               )
             end
 
@@ -46,7 +46,7 @@ module Legion
 
             user_info = begin
               connection(token: cred[:token]).get('/user').body
-            rescue StandardError
+            rescue StandardError => _e
               {}
             end
             { result: { authenticated: true, auth_type: cred[:auth_type],
@@ -64,7 +64,7 @@ module Legion
 
             Legion::Settings.dig(:github, :oauth, :client_id) ||
               Legion::Settings.dig(:github, :app, :client_id)
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -72,7 +72,7 @@ module Legion
             return nil unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:github, :app, :client_secret)
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -80,7 +80,7 @@ module Legion
             return nil unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:github, :oauth, :scopes)
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
         end

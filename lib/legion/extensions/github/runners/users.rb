@@ -20,11 +20,15 @@ module Legion
           end
 
           def list_followers(username:, per_page: 30, page: 1, **)
-            { result: cached_get("github:user:#{username}:followers:#{page}:#{per_page}") { connection(**).get("/users/#{username}/followers", per_page: per_page, page: page).body } }
+            { result: cached_get("github:user:#{username}:followers:#{page}:#{per_page}") do
+              connection(**).get("/users/#{username}/followers", per_page: per_page, page: page).body
+            end }
           end
 
           def list_following(username:, per_page: 30, page: 1, **)
-            { result: cached_get("github:user:#{username}:following:#{page}:#{per_page}") { connection(**).get("/users/#{username}/following", per_page: per_page, page: page).body } }
+            { result: cached_get("github:user:#{username}:following:#{page}:#{per_page}") do
+              connection(**).get("/users/#{username}/following", per_page: per_page, page: page).body
+            end }
           end
 
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

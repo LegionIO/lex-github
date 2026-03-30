@@ -26,11 +26,14 @@ module Legion
             def load_oauth_token(user:, **)
               data = begin
                 vault_get("github/oauth/#{user}/token")
-              rescue StandardError
+              rescue StandardError => _e
                 nil
               end
               { result: data }
             end
+
+            include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                        Legion::Extensions::Helpers.const_defined?(:Lex, false)
           end
         end
       end

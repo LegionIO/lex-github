@@ -13,11 +13,15 @@ module Legion
 
           def list_comments(owner:, repo:, issue_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body
+            end }
           end
 
           def get_comment(owner:, repo:, comment_id:, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:comments:#{comment_id}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/comments/#{comment_id}").body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:comments:#{comment_id}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/comments/#{comment_id}").body
+            end }
           end
 
           def create_comment(owner:, repo:, issue_number:, body:, **)

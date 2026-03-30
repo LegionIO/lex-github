@@ -12,7 +12,9 @@ module Legion
           include Legion::Extensions::Github::Helpers::Cache
 
           def list_user_orgs(username:, per_page: 30, page: 1, **)
-            { result: cached_get("github:user:#{username}:orgs:#{page}:#{per_page}") { connection(**).get("/users/#{username}/orgs", per_page: per_page, page: page).body } }
+            { result: cached_get("github:user:#{username}:orgs:#{page}:#{per_page}") do
+              connection(**).get("/users/#{username}/orgs", per_page: per_page, page: page).body
+            end }
           end
 
           def get_org(org:, **)
@@ -25,7 +27,9 @@ module Legion
           end
 
           def list_org_members(org:, per_page: 30, page: 1, **)
-            { result: cached_get("github:org:#{org}:members:#{page}") { connection(owner: org, **).get("/orgs/#{org}/members", per_page: per_page, page: page).body } }
+            { result: cached_get("github:org:#{org}:members:#{page}") do
+              connection(owner: org, **).get("/orgs/#{org}/members", per_page: per_page, page: page).body
+            end }
           end
 
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

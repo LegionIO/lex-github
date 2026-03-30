@@ -13,11 +13,15 @@ module Legion
 
           def list_pull_requests(owner:, repo:, state: 'open', per_page: 30, page: 1, **)
             params = { state: state, per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{page}:#{per_page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{page}:#{per_page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls", params).body
+            end }
           end
 
           def get_pull_request(owner:, repo:, pull_number:, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}").body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}").body
+            end }
           end
 
           def create_pull_request(owner:, repo:, title:, head:, base:, body: nil, draft: false, **)
@@ -43,17 +47,23 @@ module Legion
 
           def list_pull_request_commits(owner:, repo:, pull_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:commits:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/commits", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:commits:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/commits", params).body
+            end }
           end
 
           def list_pull_request_files(owner:, repo:, pull_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:files:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/files", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:files:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/files", params).body
+            end }
           end
 
           def list_pull_request_reviews(owner:, repo:, pull_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:reviews:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/reviews", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:pulls:#{pull_number}:reviews:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/pulls/#{pull_number}/reviews", params).body
+            end }
           end
 
           def create_review(owner:, repo:, pull_number:, body:, comments: [], event: 'COMMENT', **)

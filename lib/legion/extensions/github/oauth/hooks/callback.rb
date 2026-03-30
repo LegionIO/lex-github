@@ -5,7 +5,7 @@ module Legion
     module Github
       module OAuth
         module Hooks
-          class Callback < Legion::Extensions::Hooks::Base
+          class Callback < Legion::Extensions::Hooks::Base # rubocop:disable Legion/Extension/HookMissingRunnerClass
             mount '/callback'
 
             def self.runner_class

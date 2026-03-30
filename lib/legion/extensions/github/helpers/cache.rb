@@ -16,7 +16,7 @@ module Legion
 
           DEFAULT_TTL = 300
 
-          def cached_get(cache_key, ttl: nil, &block)
+          def cached_get(cache_key, ttl: nil)
             if cache_connected?
               result = cache_get(cache_key)
               return result if result
@@ -55,14 +55,14 @@ module Legion
             when /\Agithub:user:/ then configured_ttls[:user]
             when /\Agithub:org:/  then configured_ttls[:org]
             when /\Agithub:repo:[^:]+\z/ then configured_ttls[:repo]
-            when /:search:/  then configured_ttls[:search]
+            when /:search:/ then configured_ttls[:search]
             else configured_ttls.fetch(:default, DEFAULT_TTL)
             end
           end
 
           def cache_connected?
             ::Legion::Cache.connected?
-          rescue StandardError
+          rescue StandardError => _e
             false
           end
 
@@ -89,7 +89,7 @@ module Legion
 
             overrides = Legion::Settings.dig(:github, :cache, :ttls) || {}
             DEFAULT_TTLS.merge(default: DEFAULT_TTL).merge(overrides.transform_keys(&:to_sym))
-          rescue StandardError
+          rescue StandardError => _e
             DEFAULT_TTLS.merge(default: DEFAULT_TTL)
           end
         end

@@ -38,7 +38,7 @@ module Legion
 
           def shutdown
             @server&.close
-          rescue StandardError
+          rescue StandardError => _e
             nil
           ensure
             @thread&.join(2)

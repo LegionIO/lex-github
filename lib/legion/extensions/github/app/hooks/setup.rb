@@ -5,7 +5,7 @@ module Legion
     module Github
       module App
         module Hooks
-          class Setup < Legion::Extensions::Hooks::Base
+          class Setup < Legion::Extensions::Hooks::Base # rubocop:disable Legion/Extension/HookMissingRunnerClass
             mount '/setup/callback'
 
             def self.runner_class

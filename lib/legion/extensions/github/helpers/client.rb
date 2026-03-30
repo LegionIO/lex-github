@@ -63,14 +63,14 @@ module Legion
             CREDENTIAL_RESOLVERS.size
           end
 
-          def on_rate_limit(remaining:, reset_at:, status:, url:, **)  # rubocop:disable Lint/UnusedMethodArgument
+          def on_rate_limit(remaining:, reset_at:, status:, url:, **) # rubocop:disable Lint/UnusedMethodArgument
             fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
             return unless fingerprint
 
             mark_rate_limited(fingerprint: fingerprint, reset_at: reset_at)
           end
 
-          def on_scope_denied(status:, url:, path:, **)  # rubocop:disable Lint/UnusedMethodArgument
+          def on_scope_denied(status:, url:, path:, **) # rubocop:disable Lint/UnusedMethodArgument
             fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
             owner, repo = extract_owner_repo(path)
             return unless fingerprint && owner
@@ -78,7 +78,7 @@ module Legion
             register_scope(fingerprint: fingerprint, owner: owner, repo: repo, status: :denied)
           end
 
-          def on_scope_authorized(status:, url:, path:, **)  # rubocop:disable Lint/UnusedMethodArgument
+          def on_scope_authorized(status:, url:, path:, **) # rubocop:disable Lint/UnusedMethodArgument
             fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
             owner, repo = extract_owner_repo(path)
             return unless fingerprint && owner
@@ -117,7 +117,7 @@ module Legion
             { token: token_data['access_token'], auth_type: :oauth_user,
               expires_at: token_data['expires_at'],
               metadata: { source: :vault, credential_fingerprint: fp } }
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -130,7 +130,7 @@ module Legion
             fp = credential_fingerprint(auth_type: :oauth_user, identifier: 'settings_delegated')
             { token: token, auth_type: :oauth_user,
               metadata: { source: :settings, credential_fingerprint: fp } }
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -139,19 +139,19 @@ module Legion
 
             private_key = begin
               vault_get('github/app/private_key')
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             return nil unless private_key
 
             app_id = begin
               vault_get('github/app/app_id')
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             installation_id = begin
               vault_get('github/app/installation_id')
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             return nil unless app_id && installation_id
@@ -166,7 +166,7 @@ module Legion
 
             expires_at = begin
               Time.parse(token_data['expires_at'])
-            rescue StandardError
+            rescue StandardError => _e
               Time.now + 3600
             end
             result = { token: token_data['token'], auth_type: :app_installation,
@@ -175,7 +175,7 @@ module Legion
                                    credential_fingerprint: fp } }
             store_token(**result)
             result
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -184,7 +184,7 @@ module Legion
 
             app_id = begin
               Legion::Settings.dig(:github, :app, :app_id)
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             return nil unless app_id
@@ -195,12 +195,12 @@ module Legion
 
             key_path = begin
               Legion::Settings.dig(:github, :app, :private_key_path)
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             installation_id = begin
               Legion::Settings.dig(:github, :app, :installation_id)
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             return nil unless key_path && installation_id
@@ -212,7 +212,7 @@ module Legion
 
             expires_at = begin
               Time.parse(token_data['expires_at'])
-            rescue StandardError
+            rescue StandardError => _e
               Time.now + 3600
             end
             result = { token: token_data['token'], auth_type: :app_installation,
@@ -221,7 +221,7 @@ module Legion
                                    credential_fingerprint: fp } }
             store_token(**result)
             result
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -233,7 +233,7 @@ module Legion
 
             fp = credential_fingerprint(auth_type: :pat, identifier: 'vault_pat')
             { token: token, auth_type: :pat, metadata: { source: :vault, credential_fingerprint: fp } }
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -245,7 +245,7 @@ module Legion
 
             fp = credential_fingerprint(auth_type: :pat, identifier: 'settings_pat')
             { token: token, auth_type: :pat, metadata: { source: :settings, credential_fingerprint: fp } }
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -263,7 +263,7 @@ module Legion
             cache_set('github:cli_token', result, ttl: 300) if cache_connected?
             local_cache_set('github:cli_token', result, ttl: 300) if local_cache_connected?
             result
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
@@ -272,12 +272,12 @@ module Legion
             return nil unless $CHILD_STATUS&.success? && !output.empty?
 
             output
-          rescue StandardError
+          rescue StandardError => _e
             nil
           end
 
           def resolve_env
-            token = ENV['GITHUB_TOKEN']
+            token = ENV.fetch('GITHUB_TOKEN', nil)
             return nil if token.nil? || token.empty?
 
             fp = credential_fingerprint(auth_type: :env, identifier: 'env')
@@ -297,7 +297,7 @@ module Legion
             return true unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:github, :credential_fallback) != false
-          rescue StandardError
+          rescue StandardError => _e
             true
           end
         end

@@ -5,7 +5,7 @@ module Legion
     module Github
       module App
         module Actor
-          class WebhookPoller < Legion::Extensions::Actors::Poll # rubocop:disable Legion/Extension/SelfContainedActorRunnerClass
+          class WebhookPoller < Legion::Extensions::Actors::Poll # rubocop:disable Legion/Extension/SelfContainedActorRunnerClass,Legion/Extension/EveryActorRequiresTime
             def use_runner?    = false
             def check_subtask? = false
             def generate_task? = false
@@ -14,11 +14,13 @@ module Legion
               60
             end
 
+            # rubocop:disable Legion/Extension/ActorEnabledSideEffects
             def enabled?
               github_poll_settings[:owner] && github_poll_settings[:repo]
-            rescue StandardError
+            rescue StandardError => _e
               false
             end
+            # rubocop:enable Legion/Extension/ActorEnabledSideEffects
 
             def manual
               settings = github_poll_settings
@@ -44,7 +46,7 @@ module Legion
               return {} unless defined?(Legion::Settings)
 
               Legion::Settings[:github]&.dig(:webhook_poller) || {}
-            rescue StandardError
+            rescue StandardError => _e
               {}
             end
 

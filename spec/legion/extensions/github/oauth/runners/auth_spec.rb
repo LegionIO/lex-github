@@ -26,11 +26,11 @@ RSpec.describe Legion::Extensions::Github::OAuth::Runners::Auth do
   describe '#authorize_url' do
     it 'returns a properly formatted GitHub OAuth URL' do
       url = runner.authorize_url(
-        client_id: 'Iv1.abc',
-        redirect_uri: 'http://localhost:12345/callback',
-        scope: 'repo admin:org',
-        state: 'random-state',
-        code_challenge: 'challenge123',
+        client_id:             'Iv1.abc',
+        redirect_uri:          'http://localhost:12345/callback',
+        scope:                 'repo admin:org',
+        state:                 'random-state',
+        code_challenge:        'challenge123',
         code_challenge_method: 'S256'
       )
       expect(url[:result]).to start_with('https://github.com/login/oauth/authorize?')
@@ -45,7 +45,7 @@ RSpec.describe Legion::Extensions::Github::OAuth::Runners::Auth do
       stubs.post('/login/oauth/access_token') do
         [200, { 'Content-Type' => 'application/json' },
          { 'access_token' => 'ghu_test', 'refresh_token' => 'ghr_test',
-           'token_type' => 'bearer', 'expires_in' => 28800 }]
+           'token_type' => 'bearer', 'expires_in' => 28_800 }]
       end
 
       result = runner.exchange_code(
@@ -63,7 +63,7 @@ RSpec.describe Legion::Extensions::Github::OAuth::Runners::Auth do
       stubs.post('/login/oauth/access_token') do
         [200, { 'Content-Type' => 'application/json' },
          { 'access_token' => 'ghu_new', 'refresh_token' => 'ghr_new',
-           'token_type' => 'bearer', 'expires_in' => 28800 }]
+           'token_type' => 'bearer', 'expires_in' => 28_800 }]
       end
 
       result = runner.refresh_token(
@@ -92,20 +92,20 @@ RSpec.describe Legion::Extensions::Github::OAuth::Runners::Auth do
     it 'returns token when authorization completes' do
       stubs.post('/login/oauth/access_token') do
         [200, { 'Content-Type' => 'application/json' },
-         { 'access_token' => 'ghu_device', 'token_type' => 'bearer' }]
+         { access_token: 'ghu_device', token_type: 'bearer' }]
       end
 
       result = runner.poll_device_code(
         client_id: 'Iv1.abc', device_code: 'dc_123',
         interval: 0, timeout: 5
       )
-      expect(result[:result]['access_token']).to eq('ghu_device')
+      expect(result[:result][:access_token]).to eq('ghu_device')
     end
 
     it 'returns timeout error when deadline exceeded' do
       stubs.post('/login/oauth/access_token') do
         [200, { 'Content-Type' => 'application/json' },
-         { 'error' => 'authorization_pending' }]
+         { error: 'authorization_pending' }]
       end
 
       result = runner.poll_device_code(

@@ -15,9 +15,9 @@ RSpec.describe Legion::Extensions::Github::Middleware::RateLimit do
   describe 'normal response' do
     it 'passes through without modification' do
       stubs.get('/repos/test/repo') do
-        [200, { 'Content-Type' => 'application/json',
+        [200, { 'Content-Type'          => 'application/json',
                 'X-RateLimit-Remaining' => '4999',
-                'X-RateLimit-Reset' => (Time.now.to_i + 3600).to_s }, { 'name' => 'repo' }]
+                'X-RateLimit-Reset'     => (Time.now.to_i + 3600).to_s }, { 'name' => 'repo' }]
       end
       response = conn.get('/repos/test/repo')
       expect(response.status).to eq(200)
@@ -28,9 +28,9 @@ RSpec.describe Legion::Extensions::Github::Middleware::RateLimit do
     it 'calls on_rate_limit on the handler with fingerprint' do
       reset_time = Time.now.to_i + 300
       stubs.get('/repos/test/repo') do
-        [429, { 'Content-Type' => 'application/json',
+        [429, { 'Content-Type'          => 'application/json',
                 'X-RateLimit-Remaining' => '0',
-                'X-RateLimit-Reset' => reset_time.to_s },
+                'X-RateLimit-Reset'     => reset_time.to_s },
          { 'message' => 'API rate limit exceeded' }]
       end
       expect(handler).to receive(:on_rate_limit).with(
@@ -44,9 +44,9 @@ RSpec.describe Legion::Extensions::Github::Middleware::RateLimit do
     it 'calls on_rate_limit when remaining hits zero' do
       reset_time = Time.now.to_i + 300
       stubs.get('/repos/test/repo') do
-        [200, { 'Content-Type' => 'application/json',
+        [200, { 'Content-Type'          => 'application/json',
                 'X-RateLimit-Remaining' => '0',
-                'X-RateLimit-Reset' => reset_time.to_s }, { 'name' => 'repo' }]
+                'X-RateLimit-Reset'     => reset_time.to_s }, { 'name' => 'repo' }]
       end
       expect(handler).to receive(:on_rate_limit).with(hash_including(remaining: 0))
       conn.get('/repos/test/repo')

@@ -155,7 +155,7 @@ RSpec.describe Legion::Extensions::Github::Helpers::Client do
       allow(Legion::Settings).to receive(:dig).with(:github, :app, :installation_id).and_return('67890')
       allow(helper).to receive(:fetch_token).and_return(nil)
       allow(helper).to receive(:store_token)
-      allow(::File).to receive(:read).with('/tmp/test.pem').and_return('-----BEGIN RSA PRIVATE KEY-----...')
+      allow(File).to receive(:read).with('/tmp/test.pem').and_return('-----BEGIN RSA PRIVATE KEY-----...')
     end
 
     it 'generates a fresh installation token from settings on cache miss' do
@@ -172,14 +172,14 @@ RSpec.describe Legion::Extensions::Github::Helpers::Client do
 
   describe '#resolve_env' do
     it 'returns GITHUB_TOKEN from environment' do
-      allow(ENV).to receive(:[]).with('GITHUB_TOKEN').and_return('ghp_env456')
+      allow(ENV).to receive(:fetch).with('GITHUB_TOKEN', nil).and_return('ghp_env456')
       result = helper.resolve_env
       expect(result[:token]).to eq('ghp_env456')
       expect(result[:auth_type]).to eq(:env)
     end
 
     it 'returns nil when GITHUB_TOKEN is not set' do
-      allow(ENV).to receive(:[]).with('GITHUB_TOKEN').and_return(nil)
+      allow(ENV).to receive(:fetch).with('GITHUB_TOKEN', nil).and_return(nil)
       expect(helper.resolve_env).to be_nil
     end
   end

@@ -14,16 +14,22 @@ module Legion
           def list_commits(owner:, repo:, sha: nil, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
             params[:sha] = sha if sha
-            { result: cached_get("github:repo:#{owner}/#{repo}:commits:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/commits", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:commits:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/commits", params).body
+            end }
           end
 
           def get_commit(owner:, repo:, ref:, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:commits:#{ref}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/commits/#{ref}").body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:commits:#{ref}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/commits/#{ref}").body
+            end }
           end
 
           def compare_commits(owner:, repo:, base:, head:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:commits:compare:#{base}...#{head}:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/compare/#{base}...#{head}", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:commits:compare:#{base}...#{head}:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/compare/#{base}...#{head}", params).body
+            end }
           end
 
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

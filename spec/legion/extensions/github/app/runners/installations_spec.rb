@@ -30,11 +30,11 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Installations do
     it 'returns a single installation' do
       stubs.get('/app/installations/12345') do
         [200, { 'Content-Type' => 'application/json' },
-         { 'id' => 12345, 'account' => { 'login' => 'LegionIO' },
+         { 'id' => 12_345, 'account' => { 'login' => 'LegionIO' },
            'permissions' => { 'contents' => 'write' } }]
       end
       result = runner.get_installation(jwt: 'fake-jwt', installation_id: '12345')
-      expect(result[:result]['id']).to eq(12345)
+      expect(result[:result]['id']).to eq(12_345)
     end
   end
 

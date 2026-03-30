@@ -5,7 +5,7 @@ module Legion
     module Github
       module OAuth
         module Actor
-          class TokenRefresh < Legion::Extensions::Actors::Every # rubocop:disable Legion/Extension/SelfContainedActorRunnerClass
+          class TokenRefresh < Legion::Extensions::Actors::Every # rubocop:disable Legion/Extension/SelfContainedActorRunnerClass,Legion/Extension/EveryActorRequiresTime
             def use_runner?    = false
             def check_subtask? = false
             def generate_task? = false
@@ -14,11 +14,13 @@ module Legion
               3 * 60 * 60
             end
 
+            # rubocop:disable Legion/Extension/ActorEnabledSideEffects
             def enabled?
               oauth_settings[:client_id] && oauth_settings[:client_secret]
-            rescue StandardError
+            rescue StandardError => _e
               false
             end
+            # rubocop:enable Legion/Extension/ActorEnabledSideEffects
 
             def manual
               settings = oauth_settings
@@ -29,7 +31,7 @@ module Legion
 
               auth = Object.new.extend(Legion::Extensions::Github::OAuth::Runners::Auth)
               result = auth.refresh_token(
-                client_id: settings[:client_id],
+                client_id:     settings[:client_id],
                 client_secret: settings[:client_secret],
                 refresh_token: token_entry[:refresh_token]
               )
@@ -47,7 +49,7 @@ module Legion
               return {} unless defined?(Legion::Settings)
 
               Legion::Settings[:github]&.dig(:oauth) || {}
-            rescue StandardError
+            rescue StandardError => _e
               {}
             end
 
@@ -55,7 +57,7 @@ module Legion
               return nil unless defined?(Legion::Crypt)
 
               vault_get('github/oauth/delegated/token')
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
 

@@ -26,8 +26,8 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Webhooks do
   describe '#parse_event' do
     it 'parses a webhook payload with event metadata' do
       result = runner.parse_event(
-        payload: payload,
-        event_type: 'pull_request',
+        payload:     payload,
+        event_type:  'pull_request',
         delivery_id: 'abc-123'
       )
       expect(result[:result][:event_type]).to eq('pull_request')
@@ -39,10 +39,10 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Webhooks do
   describe '#receive_event' do
     it 'verifies signature and parses event in one call' do
       result = runner.receive_event(
-        payload: payload,
-        signature: valid_signature,
-        secret: webhook_secret,
-        event_type: 'issues',
+        payload:     payload,
+        signature:   valid_signature,
+        secret:      webhook_secret,
+        event_type:  'issues',
         delivery_id: 'def-456'
       )
       expect(result[:result][:verified]).to be true
@@ -52,10 +52,10 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Webhooks do
 
     it 'rejects events with invalid signatures' do
       result = runner.receive_event(
-        payload: payload,
-        signature: 'sha256=bad',
-        secret: webhook_secret,
-        event_type: 'issues',
+        payload:     payload,
+        signature:   'sha256=bad',
+        secret:      webhook_secret,
+        event_type:  'issues',
         delivery_id: 'def-456'
       )
       expect(result[:result][:verified]).to be false

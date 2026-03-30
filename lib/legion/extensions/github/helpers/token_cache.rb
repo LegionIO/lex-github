@@ -26,15 +26,13 @@ module Legion
             key = token_cache_key(auth_type, installation_id)
             entry = token_cache_read(key)
 
-            if entry.nil? && installation_id
-              entry = token_cache_read(token_cache_key(auth_type, nil))
-            end
+            entry = token_cache_read(token_cache_key(auth_type, nil)) if entry.nil? && installation_id
 
             return nil unless entry
 
             expires = begin
               Time.parse(entry[:expires_at].to_s)
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             return nil if expires && expires < Time.now + TOKEN_BUFFER_SECONDS
@@ -61,7 +59,7 @@ module Legion
 
             reset = begin
               Time.parse(entry[:reset_at].to_s)
-            rescue StandardError
+            rescue StandardError => _e
               nil
             end
             reset.nil? || reset > Time.now

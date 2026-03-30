@@ -5,7 +5,7 @@ module Legion
     module Github
       module App
         module Actor
-          class TokenRefresh < Legion::Extensions::Actors::Every # rubocop:disable Legion/Extension/SelfContainedActorRunnerClass
+          class TokenRefresh < Legion::Extensions::Actors::Every # rubocop:disable Legion/Extension/SelfContainedActorRunnerClass,Legion/Extension/EveryActorRequiresTime
             def use_runner?    = false
             def check_subtask? = false
             def generate_task? = false
@@ -14,11 +14,13 @@ module Legion
               45 * 60
             end
 
+            # rubocop:disable Legion/Extension/ActorEnabledSideEffects
             def enabled?
               defined?(Legion::Extensions::Github::Helpers::TokenCache)
-            rescue StandardError
+            rescue StandardError => _e
               false
             end
+            # rubocop:enable Legion/Extension/ActorEnabledSideEffects
 
             def manual
               log.info('App::Actor::TokenRefresh: refreshing installation token')
@@ -30,14 +32,14 @@ module Legion
               return unless jwt_result[:result]
 
               token_result = auth.create_installation_token(
-                jwt: jwt_result[:result],
+                jwt:             jwt_result[:result],
                 installation_id: settings[:installation_id]
               )
               return unless token_result.dig(:result, 'token')
 
               token_cache.store_token(
-                token: token_result[:result]['token'],
-                auth_type: :app_installation,
+                token:      token_result[:result]['token'],
+                auth_type:  :app_installation,
                 expires_at: Time.parse(token_result[:result]['expires_at'])
               )
               log.info('App::Actor::TokenRefresh: installation token refreshed')
@@ -51,7 +53,7 @@ module Legion
               return {} unless defined?(Legion::Settings)
 
               Legion::Settings[:github]&.dig(:app) || {}
-            rescue StandardError
+            rescue StandardError => _e
               {}
             end
 

@@ -37,7 +37,7 @@ module Legion
             { result: response.body }
           end
 
-          def create_release(owner:, repo:, tag_name:, name: nil, body: nil,
+          def create_release(owner:, repo:, tag_name:, name: nil, body: nil, # rubocop:disable Metrics/ParameterLists
                              target_commitish: nil, draft: false, prerelease: false,
                              generate_release_notes: false, **)
             payload = { tag_name: tag_name, name: name, body: body,
@@ -79,6 +79,9 @@ module Legion
             )
             { result: response.status == 204 }
           end
+
+          include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                      Legion::Extensions::Helpers.const_defined?(:Lex, false)
         end
       end
     end

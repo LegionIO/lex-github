@@ -53,12 +53,12 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Auth do
     it 'lists installations for the authenticated app' do
       stubs.get('/app/installations') do
         [200, { 'Content-Type' => 'application/json' },
-         [{ 'id' => 67890, 'account' => { 'login' => 'LegionIO' } }]]
+         [{ 'id' => 67_890, 'account' => { 'login' => 'LegionIO' } }]]
       end
 
       result = runner.list_installations(jwt: 'fake-jwt')
       expect(result[:result]).to be_an(Array)
-      expect(result[:result].first['id']).to eq(67890)
+      expect(result[:result].first['id']).to eq(67_890)
     end
   end
 
@@ -66,11 +66,11 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Auth do
     it 'returns a single installation' do
       stubs.get('/app/installations/67890') do
         [200, { 'Content-Type' => 'application/json' },
-         { 'id' => 67890, 'account' => { 'login' => 'LegionIO' } }]
+         { 'id' => 67_890, 'account' => { 'login' => 'LegionIO' } }]
       end
 
       result = runner.get_installation(jwt: 'fake-jwt', installation_id: '67890')
-      expect(result[:result]['id']).to eq(67890)
+      expect(result[:result]['id']).to eq(67_890)
     end
   end
 end

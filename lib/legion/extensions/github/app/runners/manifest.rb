@@ -50,8 +50,12 @@ module Legion
                      else
                        'https://github.com/settings/apps/new'
                      end
-              { result: "#{base}?manifest=#{URI.encode_www_form_component(Legion::JSON.dump(manifest))}" }
+              json_str = json_dump(manifest)
+              { result: "#{base}?manifest=#{URI.encode_www_form_component(json_str)}" }
             end
+
+            include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                        Legion::Extensions::Helpers.const_defined?(:Lex, false)
           end
         end
       end

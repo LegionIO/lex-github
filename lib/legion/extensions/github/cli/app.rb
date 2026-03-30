@@ -39,10 +39,10 @@ module Legion
 
             if respond_to?(:store_app_credentials, true)
               store_app_credentials(
-                app_id: result['id'].to_s,
-                private_key: result['pem'],
-                client_id: result['client_id'],
-                client_secret: result['client_secret'],
+                app_id:         result['id'].to_s,
+                private_key:    result['pem'],
+                client_id:      result['client_id'],
+                client_secret:  result['client_secret'],
                 webhook_secret: result['webhook_secret']
               )
             end

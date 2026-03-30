@@ -5,7 +5,7 @@ module Legion
     module Github
       module App
         module Hooks
-          class Webhook < Legion::Extensions::Hooks::Base
+          class Webhook < Legion::Extensions::Hooks::Base # rubocop:disable Legion/Extension/HookMissingRunnerClass
             mount '/webhook'
 
             def self.runner_class

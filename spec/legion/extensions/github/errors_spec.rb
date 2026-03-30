@@ -23,7 +23,7 @@ RSpec.describe Legion::Extensions::Github::AuthorizationError do
   end
 
   it 'stores attempted_sources list' do
-    error = described_class.new('exhausted', owner: 'OrgZ',
+    error = described_class.new('exhausted', owner:             'OrgZ',
                                              attempted_sources: %i[oauth_user app_installation pat])
     expect(error.attempted_sources).to eq(%i[oauth_user app_installation pat])
   end

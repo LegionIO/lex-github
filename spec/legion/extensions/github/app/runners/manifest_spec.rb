@@ -16,9 +16,9 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Manifest do
   describe '#generate_manifest' do
     it 'builds a manifest hash with required fields' do
       result = runner.generate_manifest(
-        name: 'LegionIO Bot',
-        url: 'https://legionio.dev',
-        webhook_url: 'https://legion.example.com/api/hooks/lex/github/app/webhook',
+        name:         'LegionIO Bot',
+        url:          'https://legionio.dev',
+        webhook_url:  'https://legion.example.com/api/hooks/lex/github/app/webhook',
         callback_url: 'https://legion.example.com/api/hooks/lex/github/app/setup/callback'
       )
       manifest = result[:result]
@@ -35,12 +35,12 @@ RSpec.describe Legion::Extensions::Github::App::Runners::Manifest do
     it 'converts a manifest code into app credentials' do
       stubs.post('/app-manifests/test-code/conversions') do
         [201, { 'Content-Type' => 'application/json' },
-         { 'id' => 12345, 'client_id' => 'Iv1.abc', 'client_secret' => 'secret',
+         { 'id' => 12_345, 'client_id' => 'Iv1.abc', 'client_secret' => 'secret',
            'pem' => '-----BEGIN RSA PRIVATE KEY-----...', 'webhook_secret' => 'whsec' }]
       end
 
       result = runner.exchange_manifest_code(code: 'test-code')
-      expect(result[:result]['id']).to eq(12345)
+      expect(result[:result]['id']).to eq(12_345)
       expect(result[:result]['pem']).to start_with('-----BEGIN')
     end
   end

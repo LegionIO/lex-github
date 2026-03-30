@@ -37,7 +37,7 @@ RSpec.describe Legion::Extensions::Github::App::Runners::CredentialStore do
       )
       runner.store_oauth_token(
         user: 'matt', access_token: 'ghu_test',
-        refresh_token: 'ghr_test', expires_in: 28800
+        refresh_token: 'ghr_test', expires_in: 28_800
       )
     end
   end

@@ -13,11 +13,15 @@ module Legion
 
           def list_labels(owner:, repo:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:labels:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/labels", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:labels:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/labels", params).body
+            end }
           end
 
           def get_label(owner:, repo:, name:, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:labels:#{name}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/labels/#{name}").body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:labels:#{name}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/labels/#{name}").body
+            end }
           end
 
           def create_label(owner:, repo:, name:, color:, description: nil, **)

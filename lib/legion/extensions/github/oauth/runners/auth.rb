@@ -35,26 +35,26 @@ module Legion
 
             def exchange_code(client_id:, client_secret:, code:, redirect_uri:, code_verifier:, **)
               response = oauth_connection.post('/login/oauth/access_token', {
-                                                client_id: client_id, client_secret: client_secret,
+                                                 client_id: client_id, client_secret: client_secret,
                                                 code: code, redirect_uri: redirect_uri,
                                                 code_verifier: code_verifier
-                                              })
+                                               })
               { result: response.body }
             end
 
             def refresh_token(client_id:, client_secret:, refresh_token:, **)
               response = oauth_connection.post('/login/oauth/access_token', {
-                                                client_id: client_id, client_secret: client_secret,
+                                                 client_id: client_id, client_secret: client_secret,
                                                 refresh_token: refresh_token,
                                                 grant_type: 'refresh_token'
-                                              })
+                                               })
               { result: response.body }
             end
 
             def request_device_code(client_id:, scope: 'repo', **)
               response = oauth_connection.post('/login/device/code', {
-                                                client_id: client_id, scope: scope
-                                              })
+                                                 client_id: client_id, scope: scope
+                                               })
               { result: response.body }
             end
 
@@ -64,14 +64,15 @@ module Legion
 
               loop do
                 response = oauth_connection.post('/login/oauth/access_token', {
-                                                   client_id: client_id,
+                                                   client_id:   client_id,
                                                    device_code: device_code,
-                                                   grant_type: 'urn:ietf:params:oauth:grant-type:device_code'
+                                                   grant_type:  'urn:ietf:params:oauth:grant-type:device_code'
                                                  })
                 body = response.body
-                return { result: body } if body['access_token']
+                return { result: body } if body[:access_token]
 
-                case body['error']
+                error_key = body[:error]
+                case error_key
                 when 'authorization_pending'
                   return { error: 'timeout', description: "Device code flow timed out after #{timeout}s" } if Time.now > deadline
 
@@ -80,7 +81,7 @@ module Legion
                   current_interval += 5
                   sleep(current_interval) unless current_interval.zero?
                 else
-                  return { error: body['error'], description: body['error_description'] }
+                  return { error: error_key, description: body[:error_description] }
                 end
               end
             end
@@ -98,6 +99,9 @@ module Legion
                 conn.headers['Accept'] = 'application/json'
               end
             end
+
+            include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                        Legion::Extensions::Helpers.const_defined?(:Lex, false)
           end
         end
       end

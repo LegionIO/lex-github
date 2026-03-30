@@ -51,7 +51,7 @@ RSpec.describe Legion::Extensions::Github::Helpers::TokenCache do
         ttl: anything
       )
       helper.mark_rate_limited(auth_type: :app_installation,
-                               reset_at: Time.now + 300)
+                               reset_at:  Time.now + 300)
     end
   end
 

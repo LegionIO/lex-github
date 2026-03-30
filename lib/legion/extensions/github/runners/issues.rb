@@ -13,11 +13,15 @@ module Legion
 
           def list_issues(owner:, repo:, state: 'open', per_page: 30, page: 1, **)
             params = { state: state, per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{page}:#{per_page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{page}:#{per_page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues", params).body
+            end }
           end
 
           def get_issue(owner:, repo:, issue_number:, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}").body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}").body
+            end }
           end
 
           def create_issue(owner:, repo:, title:, body: nil, labels: [], assignees: [], **)
@@ -36,7 +40,9 @@ module Legion
 
           def list_issue_comments(owner:, repo:, issue_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") do
+              connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body
+            end }
           end
 
           def create_issue_comment(owner:, repo:, issue_number:, body:, **)

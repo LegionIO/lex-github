@@ -9,7 +9,7 @@ module Legion
         module Checks
           include Legion::Extensions::Github::Helpers::Client
 
-          def create_check_run(owner:, repo:, name:, head_sha:, status: nil,
+          def create_check_run(owner:, repo:, name:, head_sha:, status: nil, # rubocop:disable Metrics/ParameterLists
                                conclusion: nil, output: nil, details_url: nil, **)
             payload = { name: name, head_sha: head_sha, status: status,
                         conclusion: conclusion, output: output, details_url: details_url }.compact
@@ -74,6 +74,9 @@ module Legion
             )
             { result: response.body }
           end
+
+          include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                      Legion::Extensions::Helpers.const_defined?(:Lex, false)
         end
       end
     end

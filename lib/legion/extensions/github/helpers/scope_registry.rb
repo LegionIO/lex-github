@@ -20,9 +20,13 @@ module Legion
             scope_cache_get("github:scope:#{fingerprint}:#{owner}") || :unknown
           end
 
-          def register_scope(fingerprint:, owner:, repo: nil, status:)
+          def register_scope(fingerprint:, owner:, status:, repo: nil)
             key = repo ? "github:scope:#{fingerprint}:#{owner}/#{repo}" : "github:scope:#{fingerprint}:#{owner}"
-            ttl = status == :denied ? scope_denied_ttl : (repo ? scope_repo_ttl : scope_org_ttl)
+            ttl = if status == :denied
+                    scope_denied_ttl
+                  else
+                    (repo ? scope_repo_ttl : scope_org_ttl)
+                  end
             cache_set(key, status, ttl: ttl) if cache_connected?
             local_cache_set(key, status, ttl: ttl) if local_cache_connected?
           end
@@ -61,7 +65,7 @@ module Legion
             return 3600 unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:github, :scope_registry, :org_ttl) || 3600
-          rescue StandardError
+          rescue StandardError => _e
             3600
           end
 
@@ -69,7 +73,7 @@ module Legion
             return 300 unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:github, :scope_registry, :repo_ttl) || 300
-          rescue StandardError
+          rescue StandardError => _e
             300
           end
 
@@ -77,7 +81,7 @@ module Legion
             return 300 unless defined?(Legion::Settings)
 
             Legion::Settings.dig(:github, :scope_registry, :denied_ttl) || 300
-          rescue StandardError
+          rescue StandardError => _e
             300
           end
         end

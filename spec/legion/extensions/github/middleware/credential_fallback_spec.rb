@@ -45,9 +45,9 @@ RSpec.describe Legion::Extensions::Github::Middleware::CredentialFallback do
       stubs.get('/repos/OrgZ/repo1') do
         attempt += 1
         if attempt == 1
-          [429, { 'Content-Type' => 'application/json',
+          [429, { 'Content-Type'          => 'application/json',
                   'X-RateLimit-Remaining' => '0',
-                  'X-RateLimit-Reset' => (Time.now.to_i + 300).to_s },
+                  'X-RateLimit-Reset'     => (Time.now.to_i + 300).to_s },
            { 'message' => 'API rate limit exceeded' }]
         else
           [200, { 'Content-Type' => 'application/json' }, { 'name' => 'repo1' }]

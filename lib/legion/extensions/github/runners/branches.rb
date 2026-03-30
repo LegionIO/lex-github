@@ -16,7 +16,7 @@ module Legion
             sha = ref_response.body.dig('object', 'sha')
 
             create_response = connection(owner: owner, repo: repo, **).post("/repos/#{owner}/#{repo}/git/refs",
-                                                                             { ref: "refs/heads/#{branch}", sha: sha })
+                                                                            { ref: "refs/heads/#{branch}", sha: sha })
 
             { success: true, ref: create_response.body['ref'], sha: sha }
           rescue StandardError => e

@@ -3,6 +3,7 @@
 require 'legion/extensions/github/version'
 require 'legion/extensions/github/helpers/client'
 require 'legion/extensions/github/app/runners/auth'
+require 'legion/extensions/github/app/runners/webhooks'
 require 'legion/extensions/github/runners/repositories'
 require 'legion/extensions/github/runners/issues'
 require 'legion/extensions/github/runners/pull_requests'

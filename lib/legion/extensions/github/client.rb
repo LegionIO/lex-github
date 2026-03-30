@@ -18,6 +18,7 @@ require 'legion/extensions/github/app/runners/auth'
 require 'legion/extensions/github/app/runners/webhooks'
 require 'legion/extensions/github/app/runners/manifest'
 require 'legion/extensions/github/app/runners/installations'
+require 'legion/extensions/github/app/runners/credential_store'
 require 'legion/extensions/github/oauth/runners/auth'
 
 module Legion
@@ -42,6 +43,7 @@ module Legion
         include App::Runners::Webhooks
         include App::Runners::Manifest
         include App::Runners::Installations
+        include App::Runners::CredentialStore
         include OAuth::Runners::Auth
 
         attr_reader :opts

@@ -44,13 +44,22 @@ module Legion
             cred = resolve_credential
             return { result: { authenticated: false } } unless cred
 
-            user_info = begin
-              connection(token: cred[:token]).get('/user').body
+            user_info = {}
+            scopes = nil
+
+            begin
+              response = connection(token: cred[:token]).get('/user')
+              user_info = response.body || {}
+              headers = response.respond_to?(:headers) ? response.headers : {}
+              scopes_header = headers['X-OAuth-Scopes'] || headers['x-oauth-scopes']
+              scopes = scopes_header&.split(',')&.map(&:strip)
             rescue StandardError => _e
-              {}
+              user_info = {}
+              scopes = nil
             end
+
             { result: { authenticated: true, auth_type: cred[:auth_type],
-                        user: user_info['login'], scopes: user_info['scopes'] } }
+                        user: user_info['login'], scopes: scopes } }
           end
 
           private

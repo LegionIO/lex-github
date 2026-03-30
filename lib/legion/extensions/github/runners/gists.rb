@@ -12,7 +12,9 @@ module Legion
           include Legion::Extensions::Github::Helpers::Cache
 
           def list_gists(per_page: 30, page: 1, **)
-            { result: cached_get("github:user:gists:#{page}") { connection(**).get('/gists', per_page: per_page, page: page).body } }
+            cred = resolve_credential
+            fp = cred&.dig(:metadata, :credential_fingerprint) || 'anonymous'
+            { result: cached_get("github:user:gists:#{fp}:#{page}:#{per_page}") { connection(**).get('/gists', per_page: per_page, page: page).body } }
           end
 
           def get_gist(gist_id:, **)

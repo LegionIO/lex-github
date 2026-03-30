@@ -27,7 +27,7 @@ module Legion
               settings = github_app_settings
               return unless settings[:app_id] && settings[:private_key] && settings[:installation_id]
 
-              auth = Legion::Extensions::Github::App::Runners::Auth
+              auth = Object.new.extend(Legion::Extensions::Github::App::Runners::Auth)
               jwt_result = auth.generate_jwt(app_id: settings[:app_id], private_key: settings[:private_key])
               return unless jwt_result[:result]
 

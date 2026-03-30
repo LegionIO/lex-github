@@ -157,7 +157,7 @@ module Legion
             return nil unless app_id && installation_id
 
             fp = credential_fingerprint(auth_type: :app_installation, identifier: "vault_app_#{app_id}")
-            cached = fetch_token(auth_type: :app_installation)
+            cached = fetch_token(auth_type: :app_installation, installation_id: installation_id)
             return cached.merge(metadata: { source: :vault, credential_fingerprint: fp }) if cached
 
             jwt = generate_jwt(app_id: app_id, private_key: private_key)[:result]
@@ -170,7 +170,7 @@ module Legion
               Time.now + 3600
             end
             result = { token: token_data['token'], auth_type: :app_installation,
-                       expires_at: expires_at,
+                       expires_at: expires_at, installation_id: installation_id,
                        metadata: { source: :vault, installation_id: installation_id,
                                    credential_fingerprint: fp } }
             store_token(**result)
@@ -190,8 +190,6 @@ module Legion
             return nil unless app_id
 
             fp = credential_fingerprint(auth_type: :app_installation, identifier: "settings_app_#{app_id}")
-            cached = fetch_token(auth_type: :app_installation)
-            return cached.merge(metadata: { source: :settings, credential_fingerprint: fp }) if cached
 
             key_path = begin
               Legion::Settings.dig(:github, :app, :private_key_path)
@@ -205,6 +203,9 @@ module Legion
             end
             return nil unless key_path && installation_id
 
+            cached = fetch_token(auth_type: :app_installation, installation_id: installation_id)
+            return cached.merge(metadata: { source: :settings, credential_fingerprint: fp }) if cached
+
             private_key = ::File.read(key_path)
             jwt = generate_jwt(app_id: app_id, private_key: private_key)[:result]
             token_data = create_installation_token(jwt: jwt, installation_id: installation_id)[:result]
@@ -216,7 +217,7 @@ module Legion
               Time.now + 3600
             end
             result = { token: token_data['token'], auth_type: :app_installation,
-                       expires_at: expires_at,
+                       expires_at: expires_at, installation_id: installation_id,
                        metadata: { source: :settings, installation_id: installation_id,
                                    credential_fingerprint: fp } }
             store_token(**result)
@@ -269,7 +270,7 @@ module Legion
 
           def gh_cli_token_output
             output = `gh auth token 2>/dev/null`.strip
-            return nil unless $CHILD_STATUS&.success? && !output.empty?
+            return nil unless $?&.success? && !output.empty? # rubocop:disable Style/SpecialGlobalVars
 
             output
           rescue StandardError => _e

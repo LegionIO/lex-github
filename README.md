@@ -43,10 +43,10 @@ legion lex exec github auth login
 ```
 
 ```ruby
-# Programmatic
-client = Legion::Extensions::Github::CLI::Auth.new
-result = client.login(client_id: 'Iv1.abc', client_secret: 'secret')
-# Opens browser → PKCE flow → stores token in Vault
+# Programmatic (using the CLI::Auth mixin)
+auth = Object.new.extend(Legion::Extensions::Github::CLI::Auth)
+result = auth.login(client_id: 'Iv1.abc', client_secret: 'secret')
+# Opens browser → PKCE flow; token can be stored in Vault if Vault integration is configured
 ```
 
 ### Credential Resolution Chain

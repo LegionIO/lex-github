@@ -29,6 +29,8 @@ module Legion
               return unless owner && repo
 
               client = Legion::Extensions::Github::Client.new
+              return unless client.respond_to?(:list_events)
+
               result = client.list_events(owner: owner, repo: repo)
               events = result[:result]
               return unless events.is_a?(Array)

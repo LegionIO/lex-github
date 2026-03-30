@@ -30,9 +30,13 @@ RSpec.describe Legion::Extensions::Github::App::Runners::CredentialStore do
   end
 
   describe '#store_oauth_token' do
-    it 'stores delegated token at user-scoped path' do
+    it 'stores delegated token at user-scoped path and canonical delegated path' do
       expect(runner).to receive(:vault_set).with(
         'github/oauth/matt/token',
+        hash_including('access_token' => 'ghu_test', 'refresh_token' => 'ghr_test')
+      )
+      expect(runner).to receive(:vault_set).with(
+        'github/oauth/delegated/token',
         hash_including('access_token' => 'ghu_test', 'refresh_token' => 'ghr_test')
       )
       runner.store_oauth_token(

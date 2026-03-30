@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'time'
+
 module Legion
   module Extensions
     module Github
@@ -20,6 +22,8 @@ module Legion
                        'expires_in' => expires_in, 'scope' => scope,
                        'stored_at' => Time.now.iso8601 }.compact
               vault_set("github/oauth/#{user}/token", data)
+              # Also write to canonical delegated path so resolve_vault_delegated can discover the token
+              vault_set('github/oauth/delegated/token', data)
               { result: true }
             end
 

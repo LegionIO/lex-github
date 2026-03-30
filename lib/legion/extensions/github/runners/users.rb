@@ -12,7 +12,9 @@ module Legion
           include Legion::Extensions::Github::Helpers::Cache
 
           def get_authenticated_user(**)
-            { result: cached_get('github:user:authenticated') { connection(**).get('/user').body } }
+            cred = resolve_credential
+            fp = cred&.dig(:metadata, :credential_fingerprint) || 'anonymous'
+            { result: cached_get("github:user:authenticated:#{fp}") { connection(**).get('/user').body } }
           end
 
           def get_user(username:, **)

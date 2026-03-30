@@ -16,7 +16,11 @@ module Legion
               return { result: false } if signature.nil? || signature.empty?
 
               expected = "sha256=#{OpenSSL::HMAC.hexdigest('SHA256', secret, payload)}"
-              { result: expected == signature }
+              # Use constant-time comparison to prevent timing side-channel attacks.
+              # Pad to equal length so fixed_length_secure_compare can be used safely.
+              result = expected.length == signature.length &&
+                       OpenSSL.fixed_length_secure_compare(expected, signature)
+              { result: result }
             end
 
             def parse_event(payload:, event_type:, delivery_id:, **)

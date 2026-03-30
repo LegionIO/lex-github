@@ -8,6 +8,7 @@ module Legion
       module Middleware
         class CredentialFallback < ::Faraday::Middleware
           RETRYABLE_STATUSES = [403, 429].freeze
+          IDEMPOTENT_METHODS = %w[GET HEAD OPTIONS PUT DELETE].freeze
 
           def initialize(app, resolver: nil)
             super(app)
@@ -41,6 +42,7 @@ module Legion
           def should_retry?(response)
             return false unless @resolver.respond_to?(:credential_fallback?)
             return false unless @resolver.credential_fallback?
+            return false unless IDEMPOTENT_METHODS.include?(response.env[:method].to_s.upcase)
 
             RETRYABLE_STATUSES.include?(response.status)
           end

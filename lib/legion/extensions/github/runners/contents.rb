@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/github/helpers/client'
+require 'legion/extensions/github/helpers/cache'
 
 module Legion
   module Extensions
@@ -8,9 +9,10 @@ module Legion
       module Runners
         module Contents
           include Legion::Extensions::Github::Helpers::Client
+          include Legion::Extensions::Github::Helpers::Cache
 
           def commit_files(owner:, repo:, branch:, files:, message:, **)
-            conn = connection(**)
+            conn = connection(owner: owner, repo: repo, **)
 
             ref = conn.get("/repos/#{owner}/#{repo}/git/ref/heads/#{branch}")
             commit_sha = ref.body.dig('object', 'sha')

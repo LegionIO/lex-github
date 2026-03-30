@@ -18,12 +18,12 @@ module Legion
 
             { success: true, ref: create_response.body['ref'], sha: sha }
           rescue StandardError => e
-            log.warn(e.message) if respond_to?(:log, true)
+            log.warn(e.message)
             { success: false, error: e.message }
           end
 
-          include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers) &&
-                                                      Legion::Extensions::Helpers.const_defined?(:Lex)
+          include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
+                                                      Legion::Extensions::Helpers.const_defined?(:Lex, false)
         end
       end
     end

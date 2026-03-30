@@ -126,6 +126,50 @@ RSpec.describe Legion::Extensions::Github::Helpers::Client do
     end
   end
 
+  describe '#resolve_vault_app' do
+    before do
+      allow(helper).to receive(:vault_get).with('github/app/private_key').and_return('-----BEGIN RSA PRIVATE KEY-----...')
+      allow(helper).to receive(:vault_get).with('github/app/app_id').and_return('12345')
+      allow(helper).to receive(:vault_get).with('github/app/installation_id').and_return('67890')
+      allow(helper).to receive(:fetch_token).and_return(nil)
+      allow(helper).to receive(:store_token)
+    end
+
+    it 'generates a fresh installation token on cache miss' do
+      stub_const('Legion::Crypt', double)
+      jwt_result = { result: 'fake-jwt' }
+      token_result = { result: { 'token' => 'ghs_fresh', 'expires_at' => '2026-03-30T13:00:00Z' } }
+      allow(helper).to receive(:generate_jwt).and_return(jwt_result)
+      allow(helper).to receive(:create_installation_token).and_return(token_result)
+
+      result = helper.resolve_vault_app
+      expect(result[:token]).to eq('ghs_fresh')
+      expect(result[:auth_type]).to eq(:app_installation)
+    end
+  end
+
+  describe '#resolve_settings_app' do
+    before do
+      allow(Legion::Settings).to receive(:dig).with(:github, :app, :app_id).and_return('12345')
+      allow(Legion::Settings).to receive(:dig).with(:github, :app, :private_key_path).and_return('/tmp/test.pem')
+      allow(Legion::Settings).to receive(:dig).with(:github, :app, :installation_id).and_return('67890')
+      allow(helper).to receive(:fetch_token).and_return(nil)
+      allow(helper).to receive(:store_token)
+      allow(::File).to receive(:read).with('/tmp/test.pem').and_return('-----BEGIN RSA PRIVATE KEY-----...')
+    end
+
+    it 'generates a fresh installation token from settings on cache miss' do
+      jwt_result = { result: 'fake-jwt' }
+      token_result = { result: { 'token' => 'ghs_settings', 'expires_at' => '2026-03-30T13:00:00Z' } }
+      allow(helper).to receive(:generate_jwt).and_return(jwt_result)
+      allow(helper).to receive(:create_installation_token).and_return(token_result)
+
+      result = helper.resolve_settings_app
+      expect(result[:token]).to eq('ghs_settings')
+      expect(result[:auth_type]).to eq(:app_installation)
+    end
+  end
+
   describe '#resolve_env' do
     it 'returns GITHUB_TOKEN from environment' do
       allow(ENV).to receive(:[]).with('GITHUB_TOKEN').and_return('ghp_env456')

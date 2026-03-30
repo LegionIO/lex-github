@@ -20,14 +20,42 @@ module Legion
           ].freeze
 
           def connection(owner: nil, repo: nil, api_url: 'https://api.github.com', token: nil, **_opts)
-            resolved_token = token || resolve_credential(owner: owner, repo: repo)&.dig(:token)
+            resolved = token ? { token: token } : resolve_credential(owner: owner, repo: repo)
+            resolved_token = resolved&.dig(:token)
+            @current_credential = resolved
+
             Faraday.new(url: api_url) do |conn|
               conn.request :json
               conn.response :json, content_type: /\bjson$/
+              conn.response :github_rate_limit, handler: self
+              conn.response :github_scope_probe, handler: self
               conn.headers['Accept'] = 'application/vnd.github+json'
               conn.headers['Authorization'] = "Bearer #{resolved_token}" if resolved_token
               conn.headers['X-GitHub-Api-Version'] = '2022-11-28'
             end
+          end
+
+          def on_rate_limit(remaining:, reset_at:, status:, url:, **)  # rubocop:disable Lint/UnusedMethodArgument
+            fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
+            return unless fingerprint
+
+            mark_rate_limited(fingerprint: fingerprint, reset_at: reset_at)
+          end
+
+          def on_scope_denied(status:, url:, path:, **)  # rubocop:disable Lint/UnusedMethodArgument
+            fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
+            owner, repo = extract_owner_repo(path)
+            return unless fingerprint && owner
+
+            register_scope(fingerprint: fingerprint, owner: owner, repo: repo, status: :denied)
+          end
+
+          def on_scope_authorized(status:, url:, path:, **)  # rubocop:disable Lint/UnusedMethodArgument
+            fingerprint = @current_credential&.dig(:metadata, :credential_fingerprint)
+            owner, repo = extract_owner_repo(path)
+            return unless fingerprint && owner
+
+            register_scope(fingerprint: fingerprint, owner: owner, repo: repo, status: :authorized)
           end
 
           def resolve_credential(owner: nil, repo: nil)
@@ -81,18 +109,44 @@ module Legion
           def resolve_vault_app
             return nil unless defined?(Legion::Crypt)
 
-            key_data = vault_get('github/app/private_key')
-            return nil unless key_data
+            private_key = begin
+              vault_get('github/app/private_key')
+            rescue StandardError
+              nil
+            end
+            return nil unless private_key
 
-            app_id = vault_get('github/app/app_id')
-            installation_id = vault_get('github/app/installation_id')
+            app_id = begin
+              vault_get('github/app/app_id')
+            rescue StandardError
+              nil
+            end
+            installation_id = begin
+              vault_get('github/app/installation_id')
+            rescue StandardError
+              nil
+            end
             return nil unless app_id && installation_id
 
             fp = credential_fingerprint(auth_type: :app_installation, identifier: "vault_app_#{app_id}")
             cached = fetch_token(auth_type: :app_installation)
             return cached.merge(metadata: { source: :vault, credential_fingerprint: fp }) if cached
 
-            nil
+            jwt = generate_jwt(app_id: app_id, private_key: private_key)[:result]
+            token_data = create_installation_token(jwt: jwt, installation_id: installation_id)[:result]
+            return nil unless token_data&.dig('token')
+
+            expires_at = begin
+              Time.parse(token_data['expires_at'])
+            rescue StandardError
+              Time.now + 3600
+            end
+            result = { token: token_data['token'], auth_type: :app_installation,
+                       expires_at: expires_at,
+                       metadata: { source: :vault, installation_id: installation_id,
+                                   credential_fingerprint: fp } }
+            store_token(**result)
+            result
           rescue StandardError
             nil
           end
@@ -100,14 +154,45 @@ module Legion
           def resolve_settings_app
             return nil unless defined?(Legion::Settings)
 
-            app_id = Legion::Settings.dig(:github, :app, :app_id)
+            app_id = begin
+              Legion::Settings.dig(:github, :app, :app_id)
+            rescue StandardError
+              nil
+            end
             return nil unless app_id
 
             fp = credential_fingerprint(auth_type: :app_installation, identifier: "settings_app_#{app_id}")
             cached = fetch_token(auth_type: :app_installation)
             return cached.merge(metadata: { source: :settings, credential_fingerprint: fp }) if cached
 
-            nil
+            key_path = begin
+              Legion::Settings.dig(:github, :app, :private_key_path)
+            rescue StandardError
+              nil
+            end
+            installation_id = begin
+              Legion::Settings.dig(:github, :app, :installation_id)
+            rescue StandardError
+              nil
+            end
+            return nil unless key_path && installation_id
+
+            private_key = ::File.read(key_path)
+            jwt = generate_jwt(app_id: app_id, private_key: private_key)[:result]
+            token_data = create_installation_token(jwt: jwt, installation_id: installation_id)[:result]
+            return nil unless token_data&.dig('token')
+
+            expires_at = begin
+              Time.parse(token_data['expires_at'])
+            rescue StandardError
+              Time.now + 3600
+            end
+            result = { token: token_data['token'], auth_type: :app_installation,
+                       expires_at: expires_at,
+                       metadata: { source: :settings, installation_id: installation_id,
+                                   credential_fingerprint: fp } }
+            store_token(**result)
+            result
           rescue StandardError
             nil
           end
@@ -172,6 +257,13 @@ module Legion
           end
 
           private
+
+          def extract_owner_repo(path)
+            match = path.match(%r{^/repos/([^/]+)/([^/]+)})
+            return [nil, nil] unless match
+
+            [match[1], match[2]]
+          end
 
           def credential_fallback?
             return true unless defined?(Legion::Settings)

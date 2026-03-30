@@ -13,34 +13,34 @@ module Legion
 
           def list_issues(owner:, repo:, state: 'open', per_page: 30, page: 1, **)
             params = { state: state, per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{page}:#{per_page}") { connection(**).get("/repos/#{owner}/#{repo}/issues", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{page}:#{per_page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues", params).body } }
           end
 
           def get_issue(owner:, repo:, issue_number:, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}") { connection(**).get("/repos/#{owner}/#{repo}/issues/#{issue_number}").body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}").body } }
           end
 
           def create_issue(owner:, repo:, title:, body: nil, labels: [], assignees: [], **)
             payload = { title: title, body: body, labels: labels, assignees: assignees }
-            response = connection(**).post("/repos/#{owner}/#{repo}/issues", payload)
+            response = connection(owner: owner, repo: repo, **).post("/repos/#{owner}/#{repo}/issues", payload)
             cache_write("github:repo:#{owner}/#{repo}:issues:#{response.body['number']}", response.body) if response.body['id']
             { result: response.body }
           end
 
           def update_issue(owner:, repo:, issue_number:, **opts)
             payload = opts.slice(:title, :body, :state, :labels, :assignees)
-            response = connection(**opts).patch("/repos/#{owner}/#{repo}/issues/#{issue_number}", payload)
+            response = connection(owner: owner, repo: repo, **opts).patch("/repos/#{owner}/#{repo}/issues/#{issue_number}", payload)
             cache_write("github:repo:#{owner}/#{repo}:issues:#{issue_number}", response.body) if response.body['id']
             { result: response.body }
           end
 
           def list_issue_comments(owner:, repo:, issue_number:, per_page: 30, page: 1, **)
             params = { per_page: per_page, page: page }
-            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") { connection(**).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:issues:#{issue_number}:comments:#{page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", params).body } }
           end
 
           def create_issue_comment(owner:, repo:, issue_number:, body:, **)
-            response = connection(**).post("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", { body: body })
+            response = connection(owner: owner, repo: repo, **).post("/repos/#{owner}/#{repo}/issues/#{issue_number}/comments", { body: body })
             { result: response.body }
           end
 

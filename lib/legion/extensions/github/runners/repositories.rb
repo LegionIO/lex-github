@@ -16,7 +16,7 @@ module Legion
           end
 
           def get_repo(owner:, repo:, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}") { connection(**).get("/repos/#{owner}/#{repo}").body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}").body } }
           end
 
           def create_repo(name:, description: nil, private: false, **)
@@ -28,23 +28,23 @@ module Legion
 
           def update_repo(owner:, repo:, **opts)
             body = opts.slice(:name, :description, :homepage, :private, :default_branch)
-            response = connection(**opts).patch("/repos/#{owner}/#{repo}", body)
+            response = connection(owner: owner, repo: repo, **opts).patch("/repos/#{owner}/#{repo}", body)
             cache_write("github:repo:#{owner}/#{repo}", response.body) if response.body['id']
             { result: response.body }
           end
 
           def delete_repo(owner:, repo:, **)
-            response = connection(**).delete("/repos/#{owner}/#{repo}")
+            response = connection(owner: owner, repo: repo, **).delete("/repos/#{owner}/#{repo}")
             cache_invalidate("github:repo:#{owner}/#{repo}") if response.status == 204
             { result: response.status == 204 }
           end
 
           def list_branches(owner:, repo:, per_page: 30, page: 1, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:branches:#{page}:#{per_page}") { connection(**).get("/repos/#{owner}/#{repo}/branches", per_page: per_page, page: page).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:branches:#{page}:#{per_page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/branches", per_page: per_page, page: page).body } }
           end
 
           def list_tags(owner:, repo:, per_page: 30, page: 1, **)
-            { result: cached_get("github:repo:#{owner}/#{repo}:tags:#{page}:#{per_page}") { connection(**).get("/repos/#{owner}/#{repo}/tags", per_page: per_page, page: page).body } }
+            { result: cached_get("github:repo:#{owner}/#{repo}:tags:#{page}:#{per_page}") { connection(owner: owner, repo: repo, **).get("/repos/#{owner}/#{repo}/tags", per_page: per_page, page: page).body } }
           end
 
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

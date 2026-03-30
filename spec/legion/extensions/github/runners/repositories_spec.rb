@@ -55,4 +55,16 @@ RSpec.describe Legion::Extensions::Github::Runners::Repositories do
       expect(result[:result].first['name']).to eq('main')
     end
   end
+
+  describe 'scope-aware connection' do
+    it 'forwards owner and repo to connection for credential resolution' do
+      expect(client).to receive(:connection)
+        .with(hash_including(owner: 'LegionIO', repo: 'lex-github'))
+        .and_return(test_connection)
+      stubs.get('/repos/LegionIO/lex-github') do
+        [200, { 'Content-Type' => 'application/json' }, { 'name' => 'lex-github' }]
+      end
+      client.get_repo(owner: 'LegionIO', repo: 'lex-github')
+    end
+  end
 end

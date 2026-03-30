@@ -16,16 +16,16 @@ module Legion
           end
 
           def get_org(org:, **)
-            { result: cached_get("github:org:#{org}") { connection(**).get("/orgs/#{org}").body } }
+            { result: cached_get("github:org:#{org}") { connection(owner: org, **).get("/orgs/#{org}").body } }
           end
 
           def list_org_repos(org:, type: 'all', per_page: 30, page: 1, **)
             params = { type: type, per_page: per_page, page: page }
-            { result: cached_get("github:org:#{org}:repos:#{page}") { connection(**).get("/orgs/#{org}/repos", params).body } }
+            { result: cached_get("github:org:#{org}:repos:#{page}") { connection(owner: org, **).get("/orgs/#{org}/repos", params).body } }
           end
 
           def list_org_members(org:, per_page: 30, page: 1, **)
-            { result: cached_get("github:org:#{org}:members:#{page}") { connection(**).get("/orgs/#{org}/members", per_page: per_page, page: page).body } }
+            { result: cached_get("github:org:#{org}:members:#{page}") { connection(owner: org, **).get("/orgs/#{org}/members", per_page: per_page, page: page).body } }
           end
 
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&

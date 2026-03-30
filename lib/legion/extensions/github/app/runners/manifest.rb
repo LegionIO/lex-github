@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'json'
 require 'uri'
 require 'legion/extensions/github/helpers/client'
 
@@ -50,7 +51,7 @@ module Legion
                      else
                        'https://github.com/settings/apps/new'
                      end
-              json_str = json_dump(manifest)
+              json_str = ::JSON.generate(manifest)
               { result: "#{base}?manifest=#{URI.encode_www_form_component(json_str)}" }
             end
 

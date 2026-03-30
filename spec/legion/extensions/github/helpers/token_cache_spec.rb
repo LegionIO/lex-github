@@ -55,6 +55,43 @@ RSpec.describe Legion::Extensions::Github::Helpers::TokenCache do
     end
   end
 
+  describe '#store_token with installation_id' do
+    it 'stores tokens keyed by installation_id' do
+      expect(helper).to receive(:local_cache_set).with(
+        'github:token:app_installation:67890',
+        hash_including(token: 'ghs_inst1'),
+        ttl: anything
+      )
+      helper.store_token(token: 'ghs_inst1', auth_type: :app_installation,
+                         expires_at: Time.now + 3600, installation_id: '67890')
+    end
+  end
+
+  describe '#fetch_token with installation_id' do
+    it 'fetches token by installation_id' do
+      cached = { token: 'ghs_inst1', auth_type: :app_installation,
+                 expires_at: (Time.now + 3600).iso8601 }
+      allow(helper).to receive(:local_cache_get)
+        .with('github:token:app_installation:67890')
+        .and_return(cached)
+      result = helper.fetch_token(auth_type: :app_installation, installation_id: '67890')
+      expect(result[:token]).to eq('ghs_inst1')
+    end
+
+    it 'falls back to generic key when installation_id not found' do
+      cached = { token: 'ghs_generic', auth_type: :app_installation,
+                 expires_at: (Time.now + 3600).iso8601 }
+      allow(helper).to receive(:local_cache_get)
+        .with('github:token:app_installation:99999')
+        .and_return(nil)
+      allow(helper).to receive(:local_cache_get)
+        .with('github:token:app_installation')
+        .and_return(cached)
+      result = helper.fetch_token(auth_type: :app_installation, installation_id: '99999')
+      expect(result[:token]).to eq('ghs_generic')
+    end
+  end
+
   describe '#rate_limited?' do
     it 'returns false when no rate limit is recorded' do
       expect(helper.rate_limited?(auth_type: :app_installation)).to be false

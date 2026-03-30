@@ -14,6 +14,11 @@ require 'legion/extensions/github/runners/labels'
 require 'legion/extensions/github/runners/comments'
 require 'legion/extensions/github/runners/branches'
 require 'legion/extensions/github/runners/contents'
+require 'legion/extensions/github/runners/actions'
+require 'legion/extensions/github/runners/checks'
+require 'legion/extensions/github/runners/releases'
+require 'legion/extensions/github/runners/deployments'
+require 'legion/extensions/github/runners/repository_webhooks'
 require 'legion/extensions/github/app/runners/auth'
 require 'legion/extensions/github/app/runners/webhooks'
 require 'legion/extensions/github/app/runners/manifest'
@@ -39,6 +44,11 @@ module Legion
         include Runners::Comments
         include Runners::Branches
         include Runners::Contents
+        include Runners::Actions
+        include Runners::Checks
+        include Runners::Releases
+        include Runners::Deployments
+        include Runners::RepositoryWebhooks
         include App::Runners::Auth
         include App::Runners::Webhooks
         include App::Runners::Manifest

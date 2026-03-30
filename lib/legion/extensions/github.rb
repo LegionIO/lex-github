@@ -29,6 +29,11 @@ require 'legion/extensions/github/runners/labels'
 require 'legion/extensions/github/runners/comments'
 require 'legion/extensions/github/runners/branches'
 require 'legion/extensions/github/runners/contents'
+require 'legion/extensions/github/runners/actions'
+require 'legion/extensions/github/runners/checks'
+require 'legion/extensions/github/runners/releases'
+require 'legion/extensions/github/runners/deployments'
+require 'legion/extensions/github/runners/repository_webhooks'
 require 'legion/extensions/github/client'
 
 module Legion

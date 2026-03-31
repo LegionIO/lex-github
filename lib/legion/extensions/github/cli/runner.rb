@@ -1,231 +1,101 @@
 # frozen_string_literal: true
 
 require 'json'
-require 'legion/extensions/github/cli/auth'
-require 'legion/extensions/github/cli/app'
-require 'legion/extensions/github/app/runners/credential_store'
+require 'net/http'
+require 'uri'
+require 'rbconfig'
 
 module Legion
   module Extensions
     module Github
       module CLI
-        module RunnerOutput
+        DAEMON_URL = ENV.fetch('LEGION_API_URL', 'http://127.0.0.1:4567')
+
+        module DaemonApi
           private
 
-          def print_result(result)
+          def api_post(path, body = {})
+            uri = URI("#{DAEMON_URL}#{path}")
+            http = Net::HTTP.new(uri.host, uri.port)
+            http.open_timeout = 5
+            http.read_timeout = 30
+            request = Net::HTTP::Post.new(uri.path, 'Content-Type' => 'application/json')
+            request.body = ::JSON.generate(body)
+            parse_response(http.request(request))
+          rescue Errno::ECONNREFUSED, Errno::ECONNRESET => _e
+            { error: 'daemon_unavailable', description: "Legion daemon not running at #{DAEMON_URL}. Start it with: legionio start" }
+          end
+
+          def api_get(path)
+            uri = URI("#{DAEMON_URL}#{path}")
+            parse_response(Net::HTTP.get_response(uri))
+          rescue Errno::ECONNREFUSED, Errno::ECONNRESET => _e
+            { error: 'daemon_unavailable', description: "Legion daemon not running at #{DAEMON_URL}. Start it with: legionio start" }
+          end
+
+          def parse_response(response)
+            ::JSON.parse(response.body, symbolize_names: true)
+          rescue ::JSON::ParserError => _e
+            { error: "http_#{response.code}", description: response.body&.strip }
+          end
+
+          def print_json(result)
             if result.is_a?(Hash) && result[:error]
               warn "Error: #{result[:error]}"
               warn "  #{result[:description]}" if result[:description]
-            elsif result.is_a?(Hash)
-              puts ::JSON.pretty_generate(deep_stringify(result))
             else
-              puts result.inspect
+              puts ::JSON.pretty_generate(result)
             end
           end
 
-          def deep_stringify(obj)
-            case obj
-            when Hash  then obj.transform_keys(&:to_s).transform_values { |v| deep_stringify(v) }
-            when Array then obj.map { |v| deep_stringify(v) }
-            else obj
-            end
-          end
-        end
-
-        module GhCli
-          def gh_available?
-            return @gh_available unless @gh_available.nil?
-
-            @gh_available = begin
-              system('gh auth status', out: ::File::NULL, err: ::File::NULL)
-            rescue StandardError => _e
-              false
-            end
-          end
-
-          def gh_token
-            output = `gh auth token 2>/dev/null`.strip
-            return nil unless $CHILD_STATUS&.success? && !output.empty?
-
-            output
-          rescue StandardError => _e
-            nil
-          end
-
-          def gh_user
-            output = `gh api user --jq .login 2>/dev/null`.strip
-            return output unless output.empty?
-
-            nil
-          rescue StandardError => _e
-            nil
-          end
-
-          def gh_login_interactive
-            warn 'Launching GitHub authentication via gh CLI...'
-            system('gh', 'auth', 'login', '--web', '--scopes', 'repo,read:org,read:user')
-            $CHILD_STATUS&.success?
-          rescue StandardError => _e
-            false
+          def open_browser(url)
+            cmd = case RbConfig::CONFIG['host_os']
+                  when /darwin/      then 'open'
+                  when /linux/       then 'xdg-open'
+                  when /mswin|mingw/ then 'start'
+                  end
+            system(cmd, url) if cmd
           end
         end
 
         class AuthRunner
-          include Legion::Logging::Helper if defined?(Legion::Logging::Helper)
-          include Github::CLI::Auth
-          include Github::App::Runners::CredentialStore
-          include RunnerOutput
-          include GhCli
+          include DaemonApi
 
-          def status(**)
-            # Try gh CLI first for zero-config status
-            token = gh_token
-            if token
-              user = gh_user
-              print_result({ result: { authenticated: true, auth_type: :gh_cli, user: user } })
-              return
-            end
-
-            # Try the full credential chain
-            cred = resolve_credential
-            if cred
-              print_result(auth_status_from_credential(cred))
-            else
-              print_result({ result: { authenticated: false,
-                                       hint:          'Run `legionio lex exec github auth login` or install gh CLI' } })
-            end
+          def status
+            print_json(api_post('/api/extensions/github/runners/auth/status'))
           end
 
-          def login(**)
-            # Try gh CLI first — zero config needed
-            if gh_available?
-              print_result({ result: { authenticated: true, auth_type: :gh_cli, user: gh_user,
-                                       message: 'Already authenticated via gh CLI' } })
-              return
-            end
-
-            # gh CLI installed but not authenticated — use its interactive flow
-            if gh_installed?
-              if gh_login_interactive
-                print_result({ result: { authenticated: true, auth_type: :gh_cli, user: gh_user,
-                                         message: 'Authenticated via gh CLI' } })
-              else
-                print_result({ error: 'gh_auth_failed', description: 'gh auth login did not complete' })
-              end
-              return
-            end
-
-            # No gh CLI — fall back to OAuth flow (needs client_id/secret)
-            result = super
-            print_result(result)
-          end
-
-          def credential_fingerprint(auth_type:, identifier:)
-            "#{auth_type}:#{identifier}"
-          end
-
-          def vault_get(path)
-            return nil unless defined?(Legion::Crypt)
-
-            ::Legion::Crypt.get(path)
-          rescue StandardError => e
-            log.warn("[lex-github] vault_get failed: #{e.message}")
-            nil
-          end
-
-          def cache_connected?
-            defined?(Legion::Cache) && ::Legion::Cache.connected?
-          rescue StandardError => e
-            log.debug("[lex-github] cache_connected? check failed: #{e.message}")
-            false
-          end
-
-          def local_cache_connected?
-            defined?(Legion::Cache::Local) && ::Legion::Cache::Local.connected?
-          rescue StandardError => e
-            log.debug("[lex-github] local_cache_connected? check failed: #{e.message}")
-            false
-          end
-
-          def cache_get(key)
-            ::Legion::Cache.get(key)
-          rescue StandardError => e
-            log.debug("[lex-github] cache_get failed: #{e.message}")
-            nil
-          end
-
-          def local_cache_get(key)
-            ::Legion::Cache::Local.get(key)
-          rescue StandardError => e
-            log.debug("[lex-github] local_cache_get failed: #{e.message}")
-            nil
-          end
-
-          def cache_set(key, value, ttl: 300)
-            ::Legion::Cache.set(key, value, ttl)
-          rescue StandardError => e
-            log.debug("[lex-github] cache_set failed: #{e.message}")
-            nil
-          end
-
-          def local_cache_set(key, value, ttl: 300)
-            ::Legion::Cache::Local.set(key, value, ttl)
-          rescue StandardError => e
-            log.debug("[lex-github] local_cache_set failed: #{e.message}")
-            nil
-          end
-
-          private
-
-          def gh_installed?
-            system('which gh', out: ::File::NULL, err: ::File::NULL)
-          rescue StandardError => _e
-            false
-          end
-
-          def auth_status_from_credential(cred)
-            user_info = {}
-            scopes = nil
-            begin
-              response = connection(token: cred[:token]).get('/user')
-              user_info = response.body || {}
-              headers = response.respond_to?(:headers) ? response.headers : {}
-              scopes_header = headers['X-OAuth-Scopes'] || headers['x-oauth-scopes']
-              scopes = scopes_header&.split(',')&.map(&:strip)
-            rescue StandardError => _e
-              # token may be invalid
-            end
-
-            { result: { authenticated: true, auth_type: cred[:auth_type],
-                        user: user_info['login'], scopes: scopes } }
+          def login
+            print_json(api_post('/api/extensions/github/runners/auth/login'))
           end
         end
 
         class AppRunner
-          include Legion::Logging::Helper if defined?(Legion::Logging::Helper)
-          include Github::CLI::App
-          include Github::App::Runners::CredentialStore
-          include RunnerOutput
+          include DaemonApi
 
-          def setup(**)
-            print_result(super)
+          def setup
+            result = api_post('/api/extensions/github/cli/app/setup')
+
+            if result[:error]
+              print_json(result)
+              return
+            end
+
+            url = result.dig(:data, :manifest_url)
+            if url
+              warn 'Opening browser to create GitHub App...'
+              open_browser(url)
+              warn 'Waiting for callback...'
+              poll = api_post('/api/extensions/github/cli/app/await_callback',
+                              { timeout: 300 })
+              print_json(poll)
+            else
+              print_json(result)
+            end
           end
 
-          def complete_setup(**)
-            print_result(super)
-          end
-
-          def credential_fingerprint(auth_type:, identifier:)
-            "#{auth_type}:#{identifier}"
-          end
-
-          def vault_get(path)
-            return nil unless defined?(Legion::Crypt)
-
-            ::Legion::Crypt.get(path)
-          rescue StandardError => e
-            log.warn("[lex-github] vault_get failed: #{e.message}")
-            nil
+          def complete_setup
+            print_json(api_post('/api/extensions/github/cli/app/complete_setup'))
           end
         end
       end

@@ -22,7 +22,12 @@ module Legion
 
           def status(**)
             cred = resolve_credential
-            return { result: { authenticated: false } } unless cred
+            unless cred
+              log.warn('[lex-github] auth status: no credential found across all sources')
+              return { result: { authenticated: false } }
+            end
+
+            log.info("[lex-github] auth status: credential found via #{cred[:auth_type]}")
 
             user_info = {}
             scopes = nil
@@ -32,8 +37,9 @@ module Legion
               headers = response.respond_to?(:headers) ? response.headers : {}
               scopes_header = headers['X-OAuth-Scopes'] || headers['x-oauth-scopes']
               scopes = scopes_header&.split(',')&.map(&:strip)
-            rescue StandardError => _e
-              # token may be invalid
+              log.info("[lex-github] auth status: authenticated as #{user_info['login']} (#{cred[:auth_type]})")
+            rescue StandardError => e
+              log.warn("[lex-github] auth status: credential found but /user request failed: #{e.message}")
             end
 
             { result: { authenticated: true, auth_type: cred[:auth_type],
@@ -42,30 +48,52 @@ module Legion
 
           def login(client_id: nil, scopes: nil, **)
             cid = client_id || settings_client_id
-            return { error: 'missing_config', description: 'Set github.app.client_id in settings' } unless cid
+            unless cid
+              log.error('[lex-github] auth login: no client_id configured — set github.app.client_id in settings')
+              return { error: 'missing_config', description: 'Set github.app.client_id in settings' }
+            end
+
+            log.info("[lex-github] auth login: starting OAuth flow with client_id=#{cid[0..7]}...")
 
             sc = scopes || settings_scopes
             browser = Helpers::BrowserAuth.new(client_id: cid, scopes: sc)
             result = browser.authenticate
 
-            if result[:result]&.dig('access_token') && respond_to?(:store_oauth_token, true)
+            if result[:error]
+              log.error("[lex-github] auth login failed: #{result[:error]} — #{result[:description]}")
+              return { result: nil, error: result[:error], description: result[:description] }
+            end
+
+            if result[:result]&.dig('access_token')
               user = begin
                 current_user(token: result[:result]['access_token'])
-              rescue StandardError => _e
+              rescue StandardError => e
+                log.warn("[lex-github] auth login: token obtained but /user lookup failed: #{e.message}")
                 'default'
               end
-              store_oauth_token(
-                user:          user,
-                access_token:  result[:result]['access_token'],
-                refresh_token: result[:result]['refresh_token'],
-                expires_in:    result[:result]['expires_in']
-              )
+
+              log.info("[lex-github] auth login: authenticated as #{user}")
+
+              if respond_to?(:store_oauth_token, true)
+                store_oauth_token(
+                  user:          user,
+                  access_token:  result[:result]['access_token'],
+                  refresh_token: result[:result]['refresh_token'],
+                  expires_in:    result[:result]['expires_in']
+                )
+                log.info("[lex-github] auth login: token stored for user=#{user}")
+              else
+                log.warn('[lex-github] auth login: store_oauth_token not available — token not persisted')
+              end
+            else
+              log.warn('[lex-github] auth login: OAuth completed but no access_token in response')
             end
 
             result
           end
 
           def installations(**)
+            log.info('[lex-github] listing app installations')
             list_installations(**)
           end
 

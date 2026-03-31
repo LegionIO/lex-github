@@ -14,7 +14,7 @@ module Legion
 
           attr_reader :client_id, :client_secret, :scopes
 
-          def initialize(client_id:, client_secret:, scopes: DEFAULT_SCOPES, auth: nil, **)
+          def initialize(client_id:, client_secret: nil, scopes: DEFAULT_SCOPES, auth: nil, **)
             @client_id = client_id
             @client_secret = client_secret
             @scopes = scopes

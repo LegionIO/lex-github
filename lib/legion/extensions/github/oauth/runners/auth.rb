@@ -33,21 +33,19 @@ module Legion
               { result: "https://github.com/login/oauth/authorize?#{params}" }
             end
 
-            def exchange_code(client_id:, client_secret:, code:, redirect_uri:, code_verifier:, **)
-              response = oauth_connection.post('/login/oauth/access_token', {
-                                                 client_id: client_id, client_secret: client_secret,
-                                                code: code, redirect_uri: redirect_uri,
-                                                code_verifier: code_verifier
-                                               })
+            def exchange_code(client_id:, code:, redirect_uri:, code_verifier:, client_secret: nil, **)
+              body = { client_id: client_id, code: code,
+                       redirect_uri: redirect_uri, code_verifier: code_verifier }
+              body[:client_secret] = client_secret if client_secret
+              response = oauth_connection.post('/login/oauth/access_token', body)
               { result: response.body }
             end
 
-            def refresh_token(client_id:, client_secret:, refresh_token:, **)
-              response = oauth_connection.post('/login/oauth/access_token', {
-                                                 client_id: client_id, client_secret: client_secret,
-                                                refresh_token: refresh_token,
-                                                grant_type: 'refresh_token'
-                                               })
+            def refresh_token(client_id:, refresh_token:, client_secret: nil, **)
+              body = { client_id: client_id, refresh_token: refresh_token,
+                       grant_type: 'refresh_token' }
+              body[:client_secret] = client_secret if client_secret
+              response = oauth_connection.post('/login/oauth/access_token', body)
               { result: response.body }
             end
 

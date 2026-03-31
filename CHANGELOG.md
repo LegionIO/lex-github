@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-03-31
+
+### Fixed
+- CLI runner output: `status` and `login` commands now print JSON results to stdout
+- CLI runner errors print to stderr via `warn`
+
 ## [0.3.2] - 2026-03-31
 
 ### Added

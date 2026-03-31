@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-03-31
+
+### Added
+- CLI command registration: `legionio lex exec github auth status|login` and `legionio lex exec github app setup|complete_setup`
+- `CLI::AuthRunner` and `CLI::AppRunner` wrapper classes for `lex exec` dispatch
+- Self-registering CLI manifest at `~/.legionio/cache/cli/lex-github.json` (written on first require)
+- Require redirect `lib/lex/github.rb` for `lex exec` compatibility
+
 ## [0.3.1] - 2026-03-30
 
 ### Changed

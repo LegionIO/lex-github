@@ -6,11 +6,11 @@
 
 ## Purpose
 
-Legion Extension that connects LegionIO to GitHub. Provides runners for interacting with the GitHub REST API covering repositories, issues, pull requests, users, organizations, gists, search, labels, comments, commits, branches, file contents, GitHub App authentication, OAuth delegated auth, and webhook handling.
+Legion Extension that connects LegionIO to GitHub. Provides runners for interacting with the GitHub REST API covering repositories, issues, pull requests, users, organizations, gists, search, labels, comments, commits, branches, file contents, Actions workflows, checks, releases, deployments, repository webhooks, GitHub App authentication, OAuth delegated auth, and credential storage.
 
 **GitHub**: https://github.com/LegionIO/lex-github
 **License**: MIT
-**Version**: 0.3.0
+**Version**: 0.3.3
 
 ## Architecture
 
@@ -28,21 +28,45 @@ Legion::Extensions::Github
 │   ├── Comments          # CRUD issue/PR comments
 │   ├── Commits           # List, get, compare commits
 │   ├── Branches          # Create branches via Git Data API
-│   └── Contents          # Commit multiple files via Git Data API
+│   ├── Contents          # Commit multiple files via Git Data API
+│   ├── Actions           # Workflows, runs, jobs, artifacts, logs
+│   ├── Checks            # Check runs, check suites, annotations
+│   ├── Releases          # CRUD releases, release assets
+│   ├── Deployments       # CRUD deployments and deployment statuses
+│   ├── RepositoryWebhooks # CRUD repo webhooks, ping, test, deliveries
+│   └── Auth              # Composite runner: delegates to App, CredentialStore, OAuth auth modules
 ├── App/
-│   └── Runners/
-│       ├── Auth          # JWT generation, installation token exchange, list/get installations
-│       ├── Webhooks      # HMAC signature verification, event parsing
-│       ├── Manifest      # GitHub App manifest flow (generate, exchange code, manifest URL)
-│       └── Installations # Full installation management (list repos, suspend, delete)
+│   ├── Runners/
+│   │   ├── Auth          # JWT generation, installation token exchange, list/get installations
+│   │   ├── Webhooks      # HMAC signature verification, event parsing
+│   │   ├── Manifest      # GitHub App manifest flow (generate, exchange code, manifest URL)
+│   │   ├── Installations # Full installation management (list repos, suspend, delete)
+│   │   └── CredentialStore # Store app credentials and OAuth tokens in Vault
+│   ├── Actors/
+│   │   ├── TokenRefresh  # Periodic App installation token refresh
+│   │   └── WebhookPoller # Polls GitHub webhook deliveries
+│   └── Transport/        # AMQP transport (exchanges/queues/messages)
 ├── OAuth/
-│   └── Runners/
-│       └── Auth          # PKCE + Authorization Code, device code, refresh, revoke
+│   ├── Runners/
+│   │   └── Auth          # PKCE + Authorization Code, device code, refresh, revoke
+│   ├── Actors/
+│   │   └── TokenRefresh  # Periodic OAuth delegated token refresh
+│   └── Transport/        # AMQP transport (exchanges/queues)
+├── Middleware/
+│   ├── RateLimit         # Tracks rate-limit headers, skips exhausted credentials
+│   ├── ScopeProbe        # Detects scope-denied 403s for specific owner/repo
+│   └── CredentialFallback # Triggers fallback to next credential source on auth failure
 ├── Helpers/
 │   ├── Client            # 8-source scope-aware credential resolution chain + Faraday builder
 │   ├── Cache             # Two-tier read-through/write-through API response caching
 │   ├── TokenCache        # Token lifecycle management (store, fetch, expiry, rate limits)
-│   └── ScopeRegistry     # Credential-to-scope authorization cache (org/repo level)
+│   ├── ScopeRegistry     # Credential-to-scope authorization cache (org/repo level)
+│   ├── BrowserAuth       # Delegated OAuth orchestrator (PKCE, headless detection, browser launch)
+│   └── CallbackServer    # Ephemeral TCP server for OAuth redirect callback
+├── CLI/
+│   ├── Auth              # `legion lex exec github auth login/status`
+│   ├── App               # `legion lex exec github app setup/complete_setup`
+│   └── Runner            # CLI dispatch registration
 └── Client                # Standalone client class (includes all runners)
 ```
 
@@ -63,12 +87,16 @@ Rate-limited credentials are skipped. Scope-denied credentials (for a given owne
 
 | Gem | Purpose |
 |-----|---------|
-| `faraday` | HTTP client for GitHub REST API |
-| `jwt` (~> 2.7) | RS256 JWT generation for GitHub App authentication |
+| `faraday` (>= 2.0) | HTTP client for GitHub REST API |
+| `jwt` (>= 2.7) | RS256 JWT generation for GitHub App authentication |
 | `base64` (>= 0.1) | PKCE code challenge computation |
-| `legion-cache` | Two-tier caching (global Redis + local in-memory) |
-| `legion-crypt` | Vault secret resolution for credentials |
-| `legion-settings` | Settings-based credential resolution |
+| `legion-cache` (>= 1.3.11) | Two-tier caching (global Redis + local in-memory) |
+| `legion-crypt` (>= 1.4.9) | Vault secret resolution for credentials |
+| `legion-data` (>= 1.4.17) | Data persistence |
+| `legion-json` (>= 1.2.1) | JSON serialization |
+| `legion-logging` (>= 1.3.2) | Logging |
+| `legion-settings` (>= 1.3.14) | Settings-based credential resolution |
+| `legion-transport` (>= 1.3.9) | AMQP transport for actors |
 
 ## Key Files
 
@@ -80,15 +108,20 @@ Rate-limited credentials are skipped. Scope-denied credentials (for a given owne
 | `lib/legion/extensions/github/helpers/cache.rb` | Two-tier API response caching |
 | `lib/legion/extensions/github/helpers/token_cache.rb` | Token lifecycle + rate limit tracking |
 | `lib/legion/extensions/github/helpers/scope_registry.rb` | Credential-to-scope authorization cache |
+| `lib/legion/extensions/github/helpers/browser_auth.rb` | OAuth PKCE browser launch + headless detection |
+| `lib/legion/extensions/github/helpers/callback_server.rb` | Ephemeral TCP server for OAuth redirect |
 | `lib/legion/extensions/github/app/runners/auth.rb` | JWT generation, installation tokens |
 | `lib/legion/extensions/github/app/runners/webhooks.rb` | Webhook signature verification, event parsing |
 | `lib/legion/extensions/github/app/runners/manifest.rb` | GitHub App manifest registration flow |
 | `lib/legion/extensions/github/app/runners/installations.rb` | Installation management |
+| `lib/legion/extensions/github/app/runners/credential_store.rb` | Store app/OAuth credentials in Vault |
 | `lib/legion/extensions/github/oauth/runners/auth.rb` | OAuth PKCE, device code, token refresh/revoke |
+| `lib/legion/extensions/github/runners/auth.rb` | Composite auth runner (delegates to app + oauth + credential_store) |
+| `lib/lex/github.rb` | Redirect shim for `require 'lex/github'` |
 
 ## Testing
 
-131 specs across 23 spec files (growing with each new runner).
+234 specs across 38 spec files.
 
 ```bash
 bundle install

@@ -15,6 +15,7 @@ module Legion
 
           CREDENTIAL_RESOLVERS = %i[
             resolve_vault_delegated resolve_settings_delegated
+            resolve_broker_app
             resolve_vault_app resolve_settings_app
             resolve_vault_pat resolve_settings_pat
             resolve_gh_cli resolve_env
@@ -135,6 +136,23 @@ module Legion
             fp = credential_fingerprint(auth_type: :oauth_user, identifier: 'settings_delegated')
             { token: token, auth_type: :oauth_user,
               metadata: { source: :settings, credential_fingerprint: fp } }
+          rescue StandardError => _e
+            nil
+          end
+
+          def resolve_broker_app
+            return nil unless defined?(Legion::Identity::Broker)
+
+            token = Legion::Identity::Broker.token_for(:github)
+            return nil unless token
+
+            lease = Legion::Identity::Broker.lease_for(:github)
+            installation_id = lease&.metadata&.dig(:installation_id) || 'unknown'
+            fp = credential_fingerprint(auth_type:  :app_installation,
+                                        identifier: "broker_app_#{installation_id}")
+            { token: token, auth_type: :app_installation,
+              metadata: { source: :broker, credential_type: :installation_token,
+                          credential_fingerprint: fp } }
           rescue StandardError => _e
             nil
           end

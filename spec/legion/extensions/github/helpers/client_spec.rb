@@ -34,6 +34,7 @@ RSpec.describe Legion::Extensions::Github::Helpers::Client do
     before do
       allow(helper).to receive(:resolve_vault_delegated).and_return(nil)
       allow(helper).to receive(:resolve_settings_delegated).and_return(nil)
+      allow(helper).to receive(:resolve_broker_app).and_return(nil)
       allow(helper).to receive(:resolve_vault_app).and_return(nil)
       allow(helper).to receive(:resolve_settings_app).and_return(nil)
       allow(helper).to receive(:resolve_vault_pat).and_return(nil)
@@ -116,6 +117,7 @@ RSpec.describe Legion::Extensions::Github::Helpers::Client do
     before do
       allow(helper).to receive(:resolve_vault_delegated).and_return(nil)
       allow(helper).to receive(:resolve_settings_delegated).and_return(nil)
+      allow(helper).to receive(:resolve_broker_app).and_return(nil)
       allow(helper).to receive(:resolve_vault_app).and_return(nil)
       allow(helper).to receive(:resolve_settings_app).and_return(nil)
       allow(helper).to receive(:resolve_vault_pat).and_return(nil)
@@ -162,6 +164,117 @@ RSpec.describe Legion::Extensions::Github::Helpers::Client do
         .with(fingerprint: 'fp_a', owner: 'OrgX', repo: 'repoY').and_return(:unknown)
       result = helper.resolve_next_credential(owner: 'OrgX', repo: 'repoY')
       expect(result[:auth_type]).to eq(:app_installation)
+    end
+  end
+
+  describe '#resolve_broker_app' do
+    context 'when Broker is available with a github lease' do
+      let(:lease) { double('Lease', metadata: { installation_id: '12345' }) }
+
+      before do
+        stub_const('Legion::Identity::Broker', double)
+        allow(Legion::Identity::Broker).to receive(:token_for).with(:github).and_return('ghs_broker_token')
+        allow(Legion::Identity::Broker).to receive(:lease_for).with(:github).and_return(lease)
+      end
+
+      it 'returns a credential hash with broker source' do
+        result = helper.resolve_broker_app
+        expect(result[:token]).to eq('ghs_broker_token')
+        expect(result[:auth_type]).to eq(:app_installation)
+        expect(result[:metadata][:source]).to eq(:broker)
+        expect(result[:metadata][:credential_type]).to eq(:installation_token)
+      end
+
+      it 'includes a stable fingerprint derived from installation_id' do
+        result = helper.resolve_broker_app
+        expected_fp = Digest::SHA256.hexdigest('app_installation:broker_app_12345')[0, 16]
+        expect(result[:metadata][:credential_fingerprint]).to eq(expected_fp)
+      end
+    end
+
+    context 'when Broker returns nil token' do
+      before do
+        stub_const('Legion::Identity::Broker', double)
+        allow(Legion::Identity::Broker).to receive(:token_for).with(:github).and_return(nil)
+      end
+
+      it 'returns nil' do
+        expect(helper.resolve_broker_app).to be_nil
+      end
+    end
+
+    context 'when Broker is not defined' do
+      it 'returns nil' do
+        expect(helper.resolve_broker_app).to be_nil
+      end
+    end
+
+    context 'when lease has no installation_id' do
+      let(:lease) { double('Lease', metadata: {}) }
+
+      before do
+        stub_const('Legion::Identity::Broker', double)
+        allow(Legion::Identity::Broker).to receive(:token_for).with(:github).and_return('ghs_token')
+        allow(Legion::Identity::Broker).to receive(:lease_for).with(:github).and_return(lease)
+      end
+
+      it 'uses unknown as installation_id in fingerprint' do
+        result = helper.resolve_broker_app
+        expected_fp = Digest::SHA256.hexdigest('app_installation:broker_app_unknown')[0, 16]
+        expect(result[:metadata][:credential_fingerprint]).to eq(expected_fp)
+      end
+    end
+  end
+
+  describe '#resolve_credential with broker' do
+    before do
+      allow(helper).to receive(:resolve_vault_delegated).and_return(nil)
+      allow(helper).to receive(:resolve_settings_delegated).and_return(nil)
+      allow(helper).to receive(:resolve_vault_app).and_return(nil)
+      allow(helper).to receive(:resolve_settings_app).and_return(nil)
+      allow(helper).to receive(:resolve_vault_pat).and_return(nil)
+      allow(helper).to receive(:resolve_settings_pat).and_return(nil)
+      allow(helper).to receive(:resolve_gh_cli).and_return(nil)
+      allow(helper).to receive(:resolve_env).and_return(nil)
+      allow(helper).to receive(:credential_fallback?).and_return(true)
+    end
+
+    it 'prefers delegated over broker app token' do
+      delegated = { token: 'delegated', auth_type: :oauth_user,
+                    metadata: { source: :vault, credential_fingerprint: 'fp_d' } }
+      broker = { token: 'broker', auth_type: :app_installation,
+                 metadata: { source: :broker, credential_fingerprint: 'fp_b' } }
+      allow(helper).to receive(:resolve_vault_delegated).and_return(delegated)
+      allow(helper).to receive(:resolve_broker_app).and_return(broker)
+      allow(helper).to receive(:rate_limited?).and_return(false)
+      allow(helper).to receive(:scope_status).and_return(:unknown)
+      result = helper.resolve_credential
+      expect(result[:auth_type]).to eq(:oauth_user)
+    end
+
+    it 'prefers broker app token over legacy vault app' do
+      broker = { token: 'broker', auth_type: :app_installation,
+                 metadata: { source: :broker, credential_fingerprint: 'fp_b' } }
+      vault_app = { token: 'vault_app', auth_type: :app_installation,
+                    metadata: { source: :vault, credential_fingerprint: 'fp_v' } }
+      allow(helper).to receive(:resolve_broker_app).and_return(broker)
+      allow(helper).to receive(:resolve_vault_app).and_return(vault_app)
+      allow(helper).to receive(:rate_limited?).and_return(false)
+      allow(helper).to receive(:scope_status).and_return(:unknown)
+      result = helper.resolve_credential
+      expect(result[:auth_type]).to eq(:app_installation)
+      expect(result[:metadata][:source]).to eq(:broker)
+    end
+
+    it 'falls back to legacy vault app when broker returns nil' do
+      vault_app = { token: 'vault_app', auth_type: :app_installation,
+                    metadata: { source: :vault, credential_fingerprint: 'fp_v' } }
+      allow(helper).to receive(:resolve_broker_app).and_return(nil)
+      allow(helper).to receive(:resolve_vault_app).and_return(vault_app)
+      allow(helper).to receive(:rate_limited?).and_return(false)
+      allow(helper).to receive(:scope_status).and_return(:unknown)
+      result = helper.resolve_credential
+      expect(result[:metadata][:source]).to eq(:vault)
     end
   end
 

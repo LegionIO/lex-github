@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-04-06
+
+### Added
+- `resolve_broker_app` to `CREDENTIAL_RESOLVERS` for Broker integration (Phase 8 Wave 3)
+- Stable `installation_id` fingerprint for consistent credential caching across GitHub App installations
+
 ## [0.3.3] - 2026-03-31
 
 ### Fixed

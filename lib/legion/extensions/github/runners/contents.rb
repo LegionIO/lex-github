@@ -11,6 +11,13 @@ module Legion
           include Legion::Extensions::Github::Helpers::Client
           include Legion::Extensions::Github::Helpers::Cache
 
+          def get_file_content(owner:, repo:, path:, ref: nil, **)
+            params = ref ? { ref: ref } : {}
+            { result: connection(owner: owner, repo: repo, **).get(
+              "/repos/#{owner}/#{repo}/contents/#{path}", params
+            ).body }
+          end
+
           def commit_files(owner:, repo:, branch:, files:, message:, **)
             conn = connection(owner: owner, repo: repo, **)
 

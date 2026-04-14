@@ -13,6 +13,36 @@ RSpec.describe Legion::Extensions::Github::Runners::Contents do
 
   before { allow(client).to receive(:connection).and_return(test_connection) }
 
+  describe '#get_file_content' do
+    before do
+      stubs.get('/repos/octocat/Hello-World/contents/README.md') do
+        [200, { 'Content-Type' => 'application/json' },
+         { 'name' => 'README.md', 'path' => 'README.md',
+           'content' => 'SGVsbG8gV29ybGQ=', 'encoding' => 'base64', 'sha' => 'abc123' }]
+      end
+    end
+
+    it 'fetches file content from the GitHub Contents API' do
+      result = client.get_file_content(owner: 'octocat', repo: 'Hello-World', path: 'README.md')
+      expect(result[:result]).to be_a(Hash)
+      expect(result[:result]['path']).to eq('README.md')
+    end
+
+    it 'wraps the response under :result' do
+      result = client.get_file_content(owner: 'octocat', repo: 'Hello-World', path: 'README.md')
+      expect(result).to have_key(:result)
+    end
+
+    it 'accepts a ref parameter' do
+      stubs.get('/repos/octocat/Hello-World/contents/README.md') do |env|
+        expect(env.params['ref']).to eq('main')
+        [200, { 'Content-Type' => 'application/json' },
+         { 'path' => 'README.md', 'sha' => 'abc123' }]
+      end
+      client.get_file_content(owner: 'octocat', repo: 'Hello-World', path: 'README.md', ref: 'main')
+    end
+  end
+
   describe '#commit_files' do
     let(:commit_sha) { 'commit111' }
     let(:base_tree_sha) { 'tree222' }

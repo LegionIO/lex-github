@@ -81,4 +81,28 @@ RSpec.describe Legion::Extensions::Github::Runners::Labels do
       expect(result[:result]).to be true
     end
   end
+
+  describe 'fleet method contract verification' do
+    it 'has add_labels_to_issue (not add_labels)' do
+      expect(client).to respond_to(:add_labels_to_issue)
+    end
+
+    it 'does not have a bare add_labels method' do
+      expect(client).not_to respond_to(:add_labels)
+    end
+
+    it 'accepts issue_number: keyword (not number:)' do
+      stubs.post('/repos/octocat/Hello-World/issues/42/labels') do
+        [200, { 'Content-Type' => 'application/json' }, [{ 'name' => 'fleet:received' }]]
+      end
+      result = client.add_labels_to_issue(
+        owner: 'octocat', repo: 'Hello-World', issue_number: 42, labels: ['fleet:received']
+      )
+      expect(result[:result]).to be_an(Array)
+    end
+
+    it 'has remove_label_from_issue' do
+      expect(client).to respond_to(:remove_label_from_issue)
+    end
+  end
 end

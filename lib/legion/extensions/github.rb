@@ -37,6 +37,12 @@ require 'legion/extensions/github/runners/releases'
 require 'legion/extensions/github/runners/deployments'
 require 'legion/extensions/github/runners/auth'
 require 'legion/extensions/github/runners/repository_webhooks'
+
+# Absorber modules (fleet pipeline intake)
+require 'legion/extensions/github/absorbers/helpers'
+require 'legion/extensions/github/absorbers/issues'
+require 'legion/extensions/github/absorbers/webhook_setup'
+
 require 'legion/extensions/github/client'
 require 'legion/extensions/github/cli/runner'
 

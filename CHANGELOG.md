@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-04-14
+
+### Added
+- `Absorbers::Issues`: normalizes GitHub issue webhook events to fleet work items; filters bot-generated events, already-claimed issues (fleet labels), and ignored actions; stores raw payload in Redis; publishes to assessor queue
+- `Absorbers::IssuesActor`: subscription actor with `pattern 'github.issues.*'` that delegates to `Absorbers::Issues`
+- `Absorbers::WebhookSetup`: mixin for idempotent webhook registration and fleet label creation (`fleet:received`, `fleet:implementing`, `fleet:pr-open`, `fleet:escalated`) on target repos
+- `Absorbers::Helpers`: shared utilities — `bot_generated?`, `has_fleet_label?`, `ignored?`, `work_item_fingerprint`, `generate_work_item_id`, `transport_connected?`
+
 ## [0.3.5] - 2026-04-13
 
 ### Added

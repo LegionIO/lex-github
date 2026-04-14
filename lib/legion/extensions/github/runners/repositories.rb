@@ -53,6 +53,15 @@ module Legion
             end }
           end
 
+          def get_tree(owner:, repo:, tree_sha:, recursive: true, **)
+            params = recursive ? { recursive: true } : {}
+            { result: cached_get("github:repo:#{owner}/#{repo}:tree:#{tree_sha}:#{recursive}") do
+              connection(owner: owner, repo: repo, **).get(
+                "/repos/#{owner}/#{repo}/git/trees/#{tree_sha}", params
+              ).body
+            end }
+          end
+
           include Legion::Extensions::Helpers::Lex if Legion::Extensions.const_defined?(:Helpers, false) &&
                                                       Legion::Extensions::Helpers.const_defined?(:Lex, false)
         end

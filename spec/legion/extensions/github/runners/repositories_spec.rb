@@ -56,6 +56,29 @@ RSpec.describe Legion::Extensions::Github::Runners::Repositories do
     end
   end
 
+  describe '#get_tree' do
+    before do
+      stubs.get('/repos/octocat/Hello-World/git/trees/main') do
+        [200, { 'Content-Type' => 'application/json' },
+         { 'sha' => 'abc123', 'tree' => [
+           { 'path' => 'lib/main.rb', 'type' => 'blob', 'sha' => 'aaa' },
+           { 'path' => 'spec', 'type' => 'tree', 'sha' => 'bbb' }
+         ], 'truncated' => false }]
+      end
+    end
+
+    it 'returns the tree for a given sha/ref' do
+      result = client.get_tree(owner: 'octocat', repo: 'Hello-World', tree_sha: 'main')
+      expect(result[:result]['tree']).to be_an(Array)
+      expect(result[:result]['tree'].first['path']).to eq('lib/main.rb')
+    end
+
+    it 'wraps the response under :result' do
+      result = client.get_tree(owner: 'octocat', repo: 'Hello-World', tree_sha: 'main')
+      expect(result).to have_key(:result)
+    end
+  end
+
   describe 'scope-aware connection' do
     it 'forwards owner and repo to connection for credential resolution' do
       expect(client).to receive(:connection)

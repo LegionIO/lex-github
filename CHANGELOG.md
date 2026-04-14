@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-04-13
+
+### Added
+- `mark_pr_ready`: GraphQL `markPullRequestAsReady` mutation to remove draft status from a PR (REST API has no endpoint for this); includes private `graphql_connection` helper
+- `get_tree`: fetch recursive repo file tree via Git Trees API (`GET /repos/{owner}/{repo}/git/trees/{sha}`)
+- `get_file_content`: fetch a single file's content via Contents API with optional `ref` param
+- `list_all_pull_request_files`: paginated variant that collects all pages (100/page) until exhausted; original `list_pull_request_files` preserved for backward compat
+- `list_pull_request_review_comments`: fetch inline code review comments (`GET /pulls/{n}/comments`), distinct from issue comments
+- `list_pull_request_commits`: simplified variant (per_page: 100, no cache) for fleet validator stale-diff guard
+
 ## [0.3.4] - 2026-04-06
 
 ### Added

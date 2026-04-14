@@ -3,38 +3,37 @@
 
 require 'spec_helper'
 
-# Stub runners for isolated testing
-module Legion
-  module Extensions
-    module Github
-      module Runners
-        module RepositoryWebhooks
-          def create_webhook(events:, **)
-            { result: { 'id' => 12_345, 'active' => true, 'events' => events } }
-          end
-
-          def list_webhooks(**)
-            { result: [] }
-          end
-        end
-
-        module Labels
-          def create_label(name:, **)
-            { result: { 'id' => 1, 'name' => name } }
-          end
-        end
-      end
-    end
-  end
-end
-
 require 'legion/extensions/github/absorbers/webhook_setup'
 
 RSpec.describe Legion::Extensions::Github::Absorbers::WebhookSetup do
+  # Anonymous stubs — do NOT reopen the real runner modules or they contaminate
+  # other specs by permanently overriding methods at the module level.
+  let(:webhook_runner_stub) do
+    Module.new do
+      def create_webhook(events:, **)
+        { result: { 'id' => 12_345, 'active' => true, 'events' => events } }
+      end
+
+      def list_webhooks(**)
+        { result: [] }
+      end
+    end
+  end
+
+  let(:label_runner_stub) do
+    Module.new do
+      def create_label(name:, **)
+        { result: { 'id' => 1, 'name' => name } }
+      end
+    end
+  end
+
   let(:test_class) do
+    wh = webhook_runner_stub
+    lb = label_runner_stub
     Class.new do
-      include Legion::Extensions::Github::Runners::RepositoryWebhooks
-      include Legion::Extensions::Github::Runners::Labels
+      include wh
+      include lb
       include Legion::Extensions::Github::Absorbers::WebhookSetup
     end
   end

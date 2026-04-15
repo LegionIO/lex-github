@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-04-15
+
+### Fixed
+- `Runners::App#setup` and `#complete_setup` were not being picked up by `build_routes` because `instance_methods(false)` only returns methods defined directly on a module, not included ones; explicitly defined both methods on `Runners::App` to surface them to the route builder
+
 ## [0.3.7] - 2026-04-15
 
 ### Fixed

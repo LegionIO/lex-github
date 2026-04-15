@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-04-15
+
+### Fixed
+- `CLI::AppRunner#setup` and `#complete_setup` were posting to `/api/extensions/github/cli/app/*` which is not a valid daemon route; corrected to `/api/extensions/github/runners/app/*`
+- `Runners::App` was missing entirely — added `runners/app.rb` as a proper runner module including `CLI::App` so the daemon auto-registers the routes via `build_routes`
+- Added `require 'legion/extensions/github/runners/app'` to main `github.rb` load chain
+- `AppRunner` now prompts interactively for `name`, `url`, and `webhook_url` when not provided; bumped `read_timeout` to 300s to survive the OAuth callback wait
+
 ## [0.3.6] - 2026-04-14
 
 ### Added

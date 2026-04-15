@@ -18,7 +18,7 @@ module Legion
             uri = URI("#{DAEMON_URL}#{path}")
             http = Net::HTTP.new(uri.host, uri.port)
             http.open_timeout = 5
-            http.read_timeout = 30
+            http.read_timeout = 300
             request = Net::HTTP::Post.new(uri.path, 'Content-Type' => 'application/json')
             request.body = ::JSON.generate(body)
             parse_response(http.request(request))
@@ -40,12 +40,22 @@ module Legion
           end
 
           def print_json(result)
-            if result.is_a?(Hash) && result[:error]
-              warn "Error: #{result[:error]}"
+            if result.is_a?(Hash) && (result[:error] || result.dig(:error, :code))
+              warn "Error: #{result[:error] || result.dig(:error, :message)}"
               warn "  #{result[:description]}" if result[:description]
             else
               puts ::JSON.pretty_generate(result)
             end
+          end
+
+          def prompt(label, default: nil)
+            if default
+              $stderr.print "#{label} [#{default}]: "
+            else
+              $stderr.print "#{label}: "
+            end
+            input = $stdin.gets&.chomp
+            input.nil? || input.empty? ? default : input
           end
 
           def open_browser(url)
@@ -74,28 +84,40 @@ module Legion
           include DaemonApi
 
           def setup
-            result = api_post('/api/extensions/github/cli/app/setup')
+            warn 'GitHub App Setup — the daemon will start a local callback server and open your browser.'
+            warn ''
 
-            if result[:error]
+            name        = prompt('App name')
+            url         = prompt('App homepage URL (e.g. https://your-domain.com)')
+            webhook_url = prompt('Webhook URL (e.g. https://your-domain.com/webhooks/github)')
+            org         = prompt('GitHub org (leave blank for personal account)', default: nil)
+
+            body = { name: name, url: url, webhook_url: webhook_url }
+            body[:org] = org if org && !org.empty?
+
+            warn ''
+            warn 'Sending setup request to daemon...'
+
+            result = api_post('/api/extensions/github/runners/app/setup', body)
+
+            if result[:error] || result.dig(:error, :code)
               print_json(result)
               return
             end
 
-            url = result.dig(:data, :manifest_url)
-            if url
-              warn 'Opening browser to create GitHub App...'
-              open_browser(url)
-              warn 'Waiting for callback...'
-              poll = api_post('/api/extensions/github/cli/app/await_callback',
-                              { timeout: 300 })
-              print_json(poll)
-            else
-              print_json(result)
+            manifest_url = result.dig(:result, :manifest_url)
+            if manifest_url
+              warn "Opening browser: #{manifest_url}"
+              open_browser(manifest_url)
+              warn 'Waiting for GitHub callback (daemon is listening)...'
             end
+
+            print_json(result)
           end
 
           def complete_setup
-            print_json(api_post('/api/extensions/github/cli/app/complete_setup'))
+            code = prompt('Authorization code from GitHub callback')
+            print_json(api_post('/api/extensions/github/runners/app/complete_setup', { code: code }))
           end
         end
       end

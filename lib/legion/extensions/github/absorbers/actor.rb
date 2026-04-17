@@ -17,7 +17,7 @@ module Legion
         # Per Wire Protocol section 17, absorber queues follow the pattern:
         #   lex.{lex_name}.absorbers.{absorber_name}.absorb
         class IssuesActor < Legion::Extensions::Actors::Subscription
-          pattern :routing_key, 'github.issues.*'
+          pattern 'github.issues.*'
 
           def absorb(payload:, **)
             Legion::Extensions::Github::Absorbers::Issues.absorb(payload: payload)

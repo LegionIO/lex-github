@@ -4,7 +4,7 @@
 
 ## [0.3.9] - 2026-04-17
 ### Fixed
-- Remove invalid `pattern 'github.issues.*'` DSL call from `IssuesActor` — `Actors::Subscription` subclasses do not have a `pattern` class method; the call raised `NoMethodError` every tick and spammed logs
+- Fix `IssuesActor` pattern call to use the single-argument form `pattern 'github.issues.*'` — the two-argument form `pattern :routing_key, value` is only valid on `Absorbers::Base` subclasses; on `Actors::Subscription` subclasses the method accepts a single routing key string
 
 ## [0.3.8] - 2026-04-15
 

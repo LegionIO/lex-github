@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-04-17
+### Fixed
+- Remove invalid `pattern 'github.issues.*'` DSL call from `IssuesActor` — `Actors::Subscription` subclasses do not have a `pattern` class method; the call raised `NoMethodError` every tick and spammed logs
+
 ## [0.3.8] - 2026-04-15
 
 ### Fixed

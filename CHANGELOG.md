@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-04-17
+### Fixed
+- Fix `IssuesActor` pattern call to use the single-argument form `pattern 'github.issues.*'` — the two-argument form `pattern :routing_key, value` is only valid on `Absorbers::Base` subclasses; on `Actors::Subscription` subclasses the method accepts a single routing key string
+
 ## [0.3.8] - 2026-04-15
 
 ### Fixed
